@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">HomeRC</string>
+
+    <string name="title_activity_main">Remote Control</string>
+    <string name="forward_button">Forwards</string>
+    <string name="backward_button">Reverse</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
+</resources>

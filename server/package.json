@@ -1,0 +1,18 @@
+{
+  "name": "remote-control-server",
+  "version": "0.0.1",
+  "description": "Remote Control Server for Toys",
+  "main": "server.js",
+  "scripts": {
+    "start": "nodemon --use-strict server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "http": "0.0.0",
+    "nodemon": "^1.10.2",
+    "websocket": "^1.0.23",
+    "onoff": "^1.1.1"
+  }
+}
