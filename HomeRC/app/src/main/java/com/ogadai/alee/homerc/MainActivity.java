@@ -13,6 +13,7 @@ import android.os.Handler;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import com.google.gson.Gson;
@@ -25,8 +26,12 @@ import java.net.URI;
  */
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
     private TextView mContentView;
+    private View mSettingsView;
+    private EditText mConnectionAddress;
 
     private SocketClient mClient;
+
+    private ConnectionDetails mConnectionDetails;
 
     private SensorManager mSensorManager;
     private Sensor mAccelerometer;
@@ -42,15 +47,46 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         mMagneticField = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
 
-        mContentView = (TextView)findViewById(R.id.fullscreen_content);
-        setConnectionStatus("Initialising...");
+        mConnectionDetails = new ConnectionDetails();
+        mConnectionDetails.readSettings(this);
 
-        mContentView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE
-                | View.SYSTEM_UI_FLAG_FULLSCREEN
-                | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+        mContentView = (TextView)findViewById(R.id.fullscreen_content);
+        mSettingsView = findViewById(R.id.connection_settings);
+        mConnectionAddress = (EditText)findViewById(R.id.connection_address);
+
+        mSettingsView.setVisibility(View.INVISIBLE);
+
+        final Context context = this;
+
+        ((Button)findViewById(R.id.connection_setup)).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mConnectionAddress.setText(mConnectionDetails.getAddress());
+                mSettingsView.setVisibility(View.VISIBLE);
+            }
+        });
+        ((Button)findViewById(R.id.connection_connect)).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mConnectionDetails.setAddress(mConnectionAddress.getText().toString());
+                mConnectionDetails.saveSettings(context);
+
+                mSettingsView.setVisibility(View.INVISIBLE);
+                setVisibility();
+
+                Thread worker = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        disconnectSocket();
+                        connectSocket();
+                    }
+                });
+                worker.start();
+            }
+        });
+
+        setConnectionStatus("Initialising...");
+        setVisibility();
 
         Button forwards = (Button)findViewById(R.id.forward_button);
         forwards.setOnTouchListener(new ButtonTouchListener("fowards"));
@@ -59,11 +95,19 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         backwards.setOnTouchListener(new ButtonTouchListener("backwards"));
     }
 
+    private void setVisibility() {
+        mContentView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE
+                | View.SYSTEM_UI_FLAG_FULLSCREEN
+                | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
 
-        setConnectionStatus("Connecting...");
         Thread worker = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -102,6 +146,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private void connectSocket() {
         try {
+            setConnectionStatus("Connecting...");
+            System.out.println("connecting to: " + mConnectionDetails.getAddress());
+
             SocketClient client = new SocketClient();
 
             client.addMessageHandler(new SocketClient.MessageHandler() {
@@ -116,7 +163,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 }
             });
 
-            URI uri = new URI("ws://192.168.36.51:8080");
+            URI uri = new URI(mConnectionDetails.getAddress());
             client.Connect(uri);
 
             mClient = client;

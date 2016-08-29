@@ -5,4 +5,7 @@
     <string name="forward_button">Forwards</string>
     <string name="backward_button">Reverse</string>
     <string name="dummy_content">DUMMY\nCONTENT</string>
+    <string name="connection_label">Connection address</string>
+    <string name="connection_connect">Connect</string>
+    <string name="connection_setup">Setup</string>
 </resources>
