@@ -6,10 +6,10 @@ import com.google.gson.annotations.SerializedName;
  * Created by alee on 29/08/2016.
  */
 public class DeviceMessage {
-    @SerializedName("Name")
+    @SerializedName("name")
     private String mName;
 
-    @SerializedName("State")
+    @SerializedName("state")
     private String mState;
 
     public DeviceMessage(String name, String state) {

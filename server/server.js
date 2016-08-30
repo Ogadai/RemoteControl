@@ -37,7 +37,7 @@ wsServer.on('request', request => {
           device.setState(state);
           console.log(decodedMsg.name + ' set: ' + state);
         } else {
-          console.log('unknown device: ' + decodedMsg.name);
+          console.log('unknown device: ', decodedMsg);
         }
       } catch(e) {
         console.error('error processing message: ', message.utf8Data);

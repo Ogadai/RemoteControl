@@ -89,7 +89,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         setVisibility();
 
         Button forwards = (Button)findViewById(R.id.forward_button);
-        forwards.setOnTouchListener(new ButtonTouchListener("fowards"));
+        forwards.setOnTouchListener(new ButtonTouchListener("forwards"));
 
         Button backwards = (Button)findViewById(R.id.backward_button);
         backwards.setOnTouchListener(new ButtonTouchListener("backwards"));
@@ -183,14 +183,20 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         setConnectionStatus("Disconnected");
     }
 
-    private void sendMessage(DeviceMessage message) {
-        Gson gson = new Gson();
-        String messageStr = gson.toJson(message);
+    private void sendMessage(final DeviceMessage message) {
+        Thread worker = new Thread(new Runnable() {
+            @Override
+            public void run() {
+            Gson gson = new Gson();
+            String messageStr = gson.toJson(message);
 
-        System.out.println(messageStr);
-        if (mClient != null) {
-            mClient.sendMessage(messageStr);
-        }
+            System.out.println(messageStr);
+            if (mClient != null) {
+                mClient.sendMessage(messageStr);
+            }
+            }
+        });
+        worker.start();
     }
 
     float[] mGravity;

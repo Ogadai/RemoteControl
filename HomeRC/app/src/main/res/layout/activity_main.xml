@@ -23,35 +23,35 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <LinearLayout
+        <FrameLayout
             android:id="@+id/fullscreen_content_controls"
             style="?metaButtonBarStyle"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom|center_horizontal"
-            android:orientation="horizontal"
+            android:layout_height="match_parent"
             tools:ignore="UselessParent">
 
             <Button
                 android:id="@+id/backward_button"
                 style="?metaButtonBarButtonStyle"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_width="100dp"
+                android:layout_height="200dp"
                 android:layout_weight="1"
                 android:layout_margin="5dp"
-                android:background="@color/black_overlay"
+                android:background="@drawable/bg_button"
+                android:layout_gravity="bottom|left"
                 android:text="@string/backward_button" />
             <Button
                 android:id="@+id/forward_button"
                 style="?metaButtonBarButtonStyle"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_width="100dp"
+                android:layout_height="200dp"
                 android:layout_margin="5dp"
                 android:layout_weight="1"
-                android:background="@color/black_overlay"
+                android:background="@drawable/bg_button"
+                android:layout_gravity="bottom|right"
                 android:text="@string/forward_button" />
 
-        </LinearLayout>
+        </FrameLayout>
     </FrameLayout>
 
     <FrameLayout
@@ -62,16 +62,17 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:layout_margin="20dp"
+            android:layout_margin="5dp"
             android:orientation="vertical"
             tools:ignore="UselessParent">
 
             <Button
                 android:id="@+id/connection_setup"
+                style="?metaButtonBarButtonStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:background="@color/black_overlay"
+                android:background="@drawable/bg_button"
                 android:text="@string/connection_setup" />
 
         </LinearLayout>
@@ -87,6 +88,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
             android:layout_margin="80dp"
+            android:padding="5dp"
             android:orientation="vertical"
             android:background="@color/colorAccent"
             tools:ignore="UselessParent">
@@ -99,15 +101,17 @@
             <EditText
                 android:id="@+id/connection_address"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:layout_marginBottom="5dp"
+                android:background="@color/textbox_bg" />
 
             <Button
                 android:id="@+id/connection_connect"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_margin="5dp"
                 android:layout_weight="1"
-                android:background="@color/black_overlay"
+                android:background="@drawable/bg_button"
                 android:text="@string/connection_connect" />
 
         </LinearLayout>
