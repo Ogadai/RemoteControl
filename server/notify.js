@@ -2,10 +2,11 @@ const queryString = require('querystring'),
       https = require('https'),
       extend = require('extend');
 
-module.exports = (hostOptions, message) => {
+module.exports = (hostOptions, message1, message2) => {
   var data = JSON.stringify({
     value1: 'Remote Control Server',
-    value2: message
+    value2: message1,
+    value3: message2
   });
 
   var options = extend({
