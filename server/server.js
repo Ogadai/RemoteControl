@@ -2,7 +2,8 @@ const WebSocketServer = require('websocket').server,
     http = require('http'),
     DeviceList = require('./device-list'),
     getIP = require('./get-ip'),
-    settings = require('./settings');
+    settings = require('./settings'),
+    notify = require('./notify');
 
 let server = http.createServer((request, response) => {
   console.log((new Date()) + ' Received request for ' + request.url);
@@ -11,8 +12,13 @@ let server = http.createServer((request, response) => {
   response.end();
 });
 server.listen(settings.port, () => {
-  console.log((new Date()) + ' Server is listening at '
-        + getIP() + ':' + settings.port);
+  let message = (new Date()) + ' Server is listening at '
+        + getIP() + ':' + settings.port; 
+  console.log(message);
+
+  if (settings.notifyOptions) {
+    notify(settings.notifyOptions, message);
+  }
 });
 
 let wsServer = new WebSocketServer({

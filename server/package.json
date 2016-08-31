@@ -10,9 +10,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "extend": "^3.0.0",
     "http": "0.0.0",
     "nodemon": "^1.10.2",
-    "websocket": "^1.0.23",
-    "onoff": "^1.1.1"
+    "onoff": "^1.1.1",
+    "websocket": "^1.0.23"
   }
 }
