@@ -12,7 +12,7 @@ let server = http.createServer((request, response) => {
   response.end();
 });
 server.listen(settings.port, () => {
-  let message = (new Date()) + ' Server is listening at '
+  let message = (new Date()) + ' Server is listening at ws://'
         + getIP() + ':' + settings.port; 
   console.log(message);
 
