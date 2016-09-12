@@ -93,7 +93,6 @@ public class SocketClient {
      */
     @OnMessage
     public void onMessage(String message) {
-        System.out.println("websocket message:" + message);
         if (mMessageHandler != null) {
             mMessageHandler.handleMessage(message);
         }
@@ -101,7 +100,6 @@ public class SocketClient {
 
     @OnMessage
     public void onMessage(byte[] message) {
-        System.out.println("websocket message: " + message.length + " bytes");
         if (mMessageHandler != null) {
             mMessageHandler.handleMessage(message);
         }

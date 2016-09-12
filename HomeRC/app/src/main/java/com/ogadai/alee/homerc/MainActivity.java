@@ -2,6 +2,7 @@ package com.ogadai.alee.homerc;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.graphics.SurfaceTexture;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -11,23 +12,39 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.MotionEvent;
+import android.view.Surface;
+import android.view.TextureView;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import com.google.gson.Gson;
 
 import java.net.URI;
+import java.util.Enumeration;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
  * status bar and navigation/system bar) with user interaction.
  */
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
-    private TextView mContentView;
+    private TextureView mContentView;
+
+    private TextView mConnectionStatus;
+    private ImageButton mConnectionLight;
     private View mSettingsView;
     private EditText mConnectionAddress;
+
+    private VideoPlayer mVideoPlayer;
+    private VideoFeed mVideoFeed;
+
+    private enum ConnectionColours {
+        RED,
+        AMBER,
+        GREEN
+    }
 
     private SocketClient mClient;
 
@@ -50,7 +67,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         mConnectionDetails = new ConnectionDetails();
         mConnectionDetails.readSettings(this);
 
-        mContentView = (TextView)findViewById(R.id.fullscreen_content);
+        mContentView = (TextureView)findViewById(R.id.fullscreen_content);
+        mConnectionStatus = (TextView)findViewById(R.id.connection_status);
+        mConnectionLight = (ImageButton) findViewById(R.id.connection_light);
+
         mSettingsView = findViewById(R.id.connection_settings);
         mConnectionAddress = (EditText)findViewById(R.id.connection_address);
 
@@ -58,11 +78,20 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         final Context context = this;
 
-        ((Button)findViewById(R.id.connection_setup)).setOnClickListener(new View.OnClickListener() {
+        ((ImageButton)findViewById(R.id.connection_setup)).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 mConnectionAddress.setText(mConnectionDetails.getAddress());
                 mSettingsView.setVisibility(View.VISIBLE);
+
+                stopVideo();
+                Thread worker = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        disconnectSocket();
+                    }
+                });
+                worker.start();
             }
         });
         ((Button)findViewById(R.id.connection_connect)).setOnClickListener(new View.OnClickListener() {
@@ -74,24 +103,17 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 mSettingsView.setVisibility(View.INVISIBLE);
                 setVisibility();
 
-                Thread worker = new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        disconnectSocket();
-                        connectSocket();
-                    }
-                });
-                worker.start();
+                setupVideoTexture();
             }
         });
 
         setConnectionStatus("Initialising...");
         setVisibility();
 
-        Button forwards = (Button)findViewById(R.id.forward_button);
+        ImageButton forwards = (ImageButton)findViewById(R.id.forward_button);
         forwards.setOnTouchListener(new ButtonTouchListener("forwards"));
 
-        Button backwards = (Button)findViewById(R.id.backward_button);
+        ImageButton backwards = (ImageButton)findViewById(R.id.backward_button);
         backwards.setOnTouchListener(new ButtonTouchListener("backwards"));
     }
 
@@ -107,15 +129,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     @Override
     protected void onResume() {
         super.onResume();
+        setVisibility();
 
-        Thread worker = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                connectSocket();
-            }
-        });
-        worker.start();
-
+        setupVideoTexture();
         mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_UI);
         mSensorManager.registerListener(this, mMagneticField, SensorManager.SENSOR_DELAY_UI);
     }
@@ -124,6 +140,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     protected void onPause() {
         super.onPause();
 
+        stopVideo();
         Thread worker = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -139,14 +156,37 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                mContentView.setText(status);
+                mConnectionStatus.setText(status);
+            }
+        });
+    }
+    private void setConnectionLight(final ConnectionColours colour) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                int drawableId = R.drawable.green;
+                switch(colour) {
+                    case RED:
+                        drawableId = R.drawable.red;
+                        break;
+                    case AMBER:
+                        drawableId = R.drawable.amber;
+                        break;
+                    case GREEN:
+                        drawableId = R.drawable.green;
+                        break;
+                }
+                mConnectionLight.setImageResource(drawableId);
             }
         });
     }
 
     private void connectSocket() {
         try {
+            disconnectSocket();
+
             setConnectionStatus("Connecting...");
+            setConnectionLight(ConnectionColours.AMBER);
             System.out.println("connecting to: " + mConnectionDetails.getAddress());
 
             SocketClient client = new SocketClient();
@@ -159,7 +199,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
                 @Override
                 public void handleMessage(byte[] message) {
-
+                    mVideoFeed.addData(message);
                 }
             });
 
@@ -167,10 +207,16 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             client.Connect(uri);
 
             mClient = client;
-            setConnectionStatus("Connected");
+
+            setConnectionStatus("");
+            setConnectionLight(ConnectionColours.GREEN);
+
+            // Start the camera
+            sendMessage(new DeviceMessage("camera", "on"));
         } catch (Exception e) {
             System.out.println("error connecting socket: " + e.getMessage());
             setConnectionStatus("Error: " + e.getMessage());
+            setConnectionLight(ConnectionColours.RED);
             mClient = null;
         }
     }
@@ -178,9 +224,68 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private void disconnectSocket() {
         if (mClient != null) {
             mClient.Disconnect();
+            setConnectionStatus("Disconnected");
+            setConnectionLight(ConnectionColours.AMBER);
         }
         mClient = null;
-        setConnectionStatus("Disconnected");
+    }
+
+    private void connectAsyncAndStreamVideo() {
+        initialiseVideo();
+        Thread worker = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                connectSocket();
+            }
+        });
+        worker.start();
+    }
+
+    private void setupVideoTexture() {
+        if (mContentView.isAvailable()) {
+            connectAsyncAndStreamVideo();
+        } else {
+            mContentView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
+                @Override
+                public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
+                    connectAsyncAndStreamVideo();
+                }
+
+                @Override
+                public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
+
+                }
+
+                @Override
+                public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
+                    return false;
+                }
+
+                @Override
+                public void onSurfaceTextureUpdated(SurfaceTexture surface) {
+
+                }
+            });
+        }
+    }
+
+    private void initialiseVideo() {
+        stopVideo();
+
+        mVideoPlayer = new VideoPlayer(new Surface(mContentView.getSurfaceTexture()), mContentView.getWidth(), mContentView.getHeight());
+        mVideoFeed = new VideoFeed(new VideoFeed.Callback() {
+            @Override
+            public void onData(byte[] dataBlock) {
+                mVideoPlayer.addData(dataBlock);
+            }
+        });
+    }
+
+    private void stopVideo() {
+        if (mVideoPlayer != null) {
+            mVideoPlayer.stop();
+            mVideoPlayer = null;
+        }
     }
 
     private void sendMessage(final DeviceMessage message) {
@@ -192,7 +297,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
             System.out.println(messageStr);
             if (mClient != null) {
-                mClient.sendMessage(messageStr);
+                try {
+                    mClient.sendMessage(messageStr);
+                } catch (Exception e) {
+                    System.out.println("error sending socket message: " + e.getMessage());
+                    disconnectSocket();
+                }
             }
             }
         });

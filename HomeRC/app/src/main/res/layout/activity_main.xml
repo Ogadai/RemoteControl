@@ -5,19 +5,11 @@
     android:background="#0099cc"
     tools:context="com.ogadai.alee.homerc.MainActivity">
 
-    <!-- The primary full-screen view. This can be replaced with whatever view
-         is needed to present your content, e.g. VideoView, SurfaceView,
-         TextureView, etc. -->
-    <TextView
-        android:id="@+id/fullscreen_content"
+    <TextureView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:gravity="center"
-        android:keepScreenOn="true"
-        android:text="@string/dummy_content"
-        android:textColor="#33b5e5"
-        android:textSize="50sp"
-        android:textStyle="bold" />
+        android:id="@+id/fullscreen_content"
+        android:layout_centerHorizontal="true" />
 
     <FrameLayout
         android:layout_width="match_parent"
@@ -30,26 +22,28 @@
             android:layout_height="match_parent"
             tools:ignore="UselessParent">
 
-            <Button
+            <ImageButton
                 android:id="@+id/backward_button"
                 style="?metaButtonBarButtonStyle"
-                android:layout_width="100dp"
+                android:layout_width="150dp"
                 android:layout_height="200dp"
                 android:layout_weight="1"
                 android:layout_margin="5dp"
                 android:background="@drawable/bg_button"
                 android:layout_gravity="bottom|left"
-                android:text="@string/backward_button" />
-            <Button
+                android:clickable="true"
+                android:src="@drawable/backwards" />
+            <ImageButton
                 android:id="@+id/forward_button"
                 style="?metaButtonBarButtonStyle"
-                android:layout_width="100dp"
+                android:layout_width="150dp"
                 android:layout_height="200dp"
                 android:layout_margin="5dp"
                 android:layout_weight="1"
                 android:background="@drawable/bg_button"
                 android:layout_gravity="bottom|right"
-                android:text="@string/forward_button" />
+                android:clickable="true"
+                android:src="@drawable/forwards" />
 
         </FrameLayout>
     </FrameLayout>
@@ -61,19 +55,38 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
+            android:layout_gravity="left"
             android:layout_margin="5dp"
-            android:orientation="vertical"
+            android:orientation="horizontal"
             tools:ignore="UselessParent">
 
-            <Button
+            <ImageButton
                 android:id="@+id/connection_setup"
                 style="?metaButtonBarButtonStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:background="@drawable/bg_button"
-                android:text="@string/connection_setup" />
+                android:clickable="true"
+                android:src="@android:drawable/ic_menu_preferences" />
+
+            <TextView
+                android:id="@+id/connection_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_margin="5dp"
+                android:text="@string/connection_status"
+                android:textColor="#33b5e5"
+                android:textSize="12dp" />
+
+            <ImageButton
+                android:id="@+id/connection_light"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:clickable="false"
+                android:background="@null"
+                android:src="@drawable/red"
+                />
 
         </LinearLayout>
     </FrameLayout>

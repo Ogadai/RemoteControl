@@ -4,8 +4,9 @@
     <string name="title_activity_main">Remote Control</string>
     <string name="forward_button">Forwards</string>
     <string name="backward_button">Reverse</string>
-    <string name="dummy_content">DUMMY\nCONTENT</string>
+    <string name="dummy_content">DUMMY CONTENT</string>
     <string name="connection_label">Connection address</string>
     <string name="connection_connect">Connect</string>
     <string name="connection_setup">Setup</string>
+    <string name="connection_status">Connecting...</string>
 </resources>
