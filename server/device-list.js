@@ -30,6 +30,14 @@ class DeviceList extends EventEmitter {
     }
   }
 
+  reset() {
+    for(var name in devices) {
+      if (devices[name].reset) {
+        devices[name].reset();
+      }
+    }
+  }
+
   disconnectAll() {
     for(var name in devices) {
       if (devices[name].disconnect) {

@@ -14,6 +14,7 @@ class SteeringDevice extends EventEmitter {
 
     this.position = 0;
     this.max = config.max;
+    this.limit = 50;
 
     this.timer = null;
     this.startTime = null;
@@ -41,10 +42,8 @@ class SteeringDevice extends EventEmitter {
     this.startTime = new Date().getTime();
     this.direction = command.direction;
 
-console.log(command.direction + ' for ' + command.timeOn);
-
     if (this.gpio) {
-      this.gpio[command.direction].writeSync(1);
+      this.setGpio(command.direction === 'left' ? -1 : 1);
     }
 
     this.timer = setTimeout(() => {
@@ -65,12 +64,17 @@ console.log(command.direction + ' for ' + command.timeOn);
       this.updatePosition(this.direction, endTime - this.startTime);
 
       if (this.gpio) {
-        this.gpio.left.writeSync(this.position === -100 ? 1 : 0);
-        this.gpio.right.writeSync(this.position === 100 ? 1 : 0);
+	this.setGpio((this.position === -this.limit) ? -1 : ((this.position === this.limit) ? 1 : 0));
       }
 
       this.direction = null;
     }
+  }
+
+  setGpio(offset) {
+console.log('steering: ' + offset);
+    this.gpio.left.writeSync(offset < 0 ? 1 : 0);
+    this.gpio.right.writeSync(offset > 0 ? 1 : 0);
   }
 
   getCommand(state) {
@@ -79,22 +83,21 @@ console.log(command.direction + ' for ' + command.timeOn);
 
     return {
       direction: state < this.position ? 'left' : 'right',
-      timeOn: Math.abs((this.position - state) * this.max / 100)
+      timeOn: Math.abs((this.position - state) * this.max / this.limit)
     };
   }
 
   updatePosition(direction, timeOn) {
-    let dist = 100 * timeOn / this.max,
+    let dist = this.limit * timeOn / this.max,
         sign = direction === 'left' ? -1 : 1,
         newPosition = this.position + sign * dist;
     
-    if (newPosition > 100)
-      newPosition = 100
-    else if (newPosition < -100)
-      newPosition = -100
+    if (newPosition > this.limit)
+      newPosition = this.limit
+    else if (newPosition < -this.limit)
+      newPosition = -this.limit
 
     this.position = newPosition;
-console.log('position: ' + this.position);
   }
 }
 module.exports = SteeringDevice;

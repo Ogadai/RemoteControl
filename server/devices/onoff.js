@@ -14,8 +14,11 @@ class OnOffDevice extends EventEmitter {
   setState(state) {
     if (this.gpio) {
       this.gpio.writeSync(state == 'on' ? 1 : 0);
-console.log('pin ' + this.pin + ': ' + (state == 'on' ? 1 : 0));
     }
+  }
+
+  reset() {
+    setState('off');
   }
 
   disconnect() {
