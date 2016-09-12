@@ -27,25 +27,25 @@ class DeviceList extends EventEmitter {
   }
 
   reportInitialStates() {
-    for(var name in devices) {
-      if (devices[name].reportInitialState) {
-        devices[name].reportInitialState();
+    for(var name in this.devices) {
+      if (this.devices[name].reportInitialState) {
+        this.devices[name].reportInitialState();
       }
     }
   }
 
   reset() {
-    for(var name in devices) {
-      if (devices[name].reset) {
-        devices[name].reset();
+    for(var name in this.devices) {
+      if (this.devices[name].reset) {
+        this.devices[name].reset();
       }
     }
   }
 
   disconnectAll() {
-    for(var name in devices) {
-      if (devices[name].disconnect) {
-        devices[name].disconnect();
+    for(var name in this.devices) {
+      if (this.devices[name].disconnect) {
+        this.devices[name].disconnect();
       }
     }
   }

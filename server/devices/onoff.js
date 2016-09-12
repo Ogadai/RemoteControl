@@ -20,7 +20,7 @@ class OnOffDevice extends EventEmitter {
   }
 
   reset() {
-    setState('off');
+    this.setState('off');
   }
 
   disconnect() {

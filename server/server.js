@@ -60,6 +60,7 @@ wsServer.on('request', request => {
   connection.on('close', (reasonCode, description) => {
     console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
 
+    deviceList.reset();
     deviceList.removeListener('changed', changedMessage);
     deviceList.removeListener('video', sendVideo);
     connection = null;
@@ -72,7 +73,6 @@ wsServer.on('request', request => {
   }
   function sendVideo(data) {
     if (connection) {
-      console.log('sent - ' + data.length);
       connection.sendBytes(data);
     }
   }
