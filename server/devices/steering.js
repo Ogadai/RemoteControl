@@ -58,7 +58,7 @@ console.log(command.direction + ' for ' + command.timeOn);
   stop() {
     // Stop any current movement
     if (this.timer) {
-      this.timer.clearTimeout();
+      clearTimeout(this.timer);
       this.timer = null;
     }
 

@@ -8,13 +8,15 @@ class OnOffDevice extends EventEmitter {
     super();
 
     if (Gpio) {
+      this.pin = config.gpio.pin;
       this.gpio = new Gpio(config.gpio.pin, 'out');
     }
   }
 
   setState(state) {
     if (this.gpio) {
-      this.gpio.writeSync(state == 'on' ? 1 : 0)
+      this.gpio.writeSync(state == 'on' ? 1 : 0);
+console.log('pin ' + this.pin + ': ' + (state == 'on' ? 1 : 0));
     }
   }
 
