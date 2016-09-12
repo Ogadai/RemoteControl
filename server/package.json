@@ -4,7 +4,7 @@
   "description": "Remote Control Server for Toys",
   "main": "server.js",
   "scripts": {
-    "start": "nodemon --use-strict server.js",
+    "start": "nodemon server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
@@ -15,6 +15,7 @@
     "moment": "^2.14.1",
     "nodemon": "^1.10.2",
     "onoff": "^1.1.1",
+    "raspicam": "^0.2.13",
     "websocket": "^1.0.23"
   }
 }

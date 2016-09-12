@@ -1,3 +1,5 @@
+"use strict"
+
 const queryString = require('querystring'),
       https = require('https'),
       extend = require('extend');

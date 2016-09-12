@@ -1,3 +1,5 @@
+"use strict"
+
 const WebSocketServer = require('websocket').server,
     http = require('http'),
     moment = require('moment'),
@@ -57,10 +59,24 @@ wsServer.on('request', request => {
   });
   connection.on('close', (reasonCode, description) => {
     console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
+
+    deviceList.removeListener('changed', changedMessage);
+    deviceList.removeListener('video', sendVideo);
     connection = null;
   });
 
-  deviceList.on('changed', (name, state) => {
-    connection.sendUTF(name + ' changed: ' + state);
-  });
+  function changedMessage(name, state) {
+    if (connection) {
+      connection.sendUTF(name + ' changed: ' + state);
+    }
+  }
+  function sendVideo(data) {
+    if (connection) {
+      console.log('sent - ' + data.length);
+      connection.sendBytes(data);
+    }
+  }
+
+  deviceList.on('changed', changedMessage);
+  deviceList.on('video', sendVideo);
 });
