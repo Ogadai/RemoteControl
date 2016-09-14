@@ -16,8 +16,8 @@ class CameraDevice extends EventEmitter {
     this.mock = config.mock;
     this.options = extend({ mode: 'video', output: '-' }, config.options);
     
-    this.minLag = config.minLag || 5;
-    this.maxLag = config.maxLag || 1;
+    this.minLag = config.minLag || 1;
+    this.maxLag = config.maxLag || 5;
 
     this.blocksSent = 0;
     this.skipBlocks = 0;
