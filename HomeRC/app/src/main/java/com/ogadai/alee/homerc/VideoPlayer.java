@@ -5,6 +5,7 @@ import android.media.MediaFormat;
 import android.view.Surface;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 
 /**
  * Created by alee on 14/04/2016.
@@ -19,9 +20,13 @@ public class VideoPlayer {
     private MediaCodec mMediaCodec = null;
     private long startMs = 0;
 
-    private byte[] mLastDataBlock;
-    private ByteBuffer m_LastInputBuffer;
-    private int m_LastInputIndex;
+    private ArrayList<byte[]> mDataBlocks;
+    private int mBlockCount;
+    private static final int MAX_BLOCK_QUEUE_INIT = 10;
+    private static final int MAX_BLOCK_QUEUE = 1;
+
+    private ByteBuffer mLastInputBuffer;
+    private int mLastInputIndex;
 
     private static final String VIDEO_FORMAT = "video/avc"; // h.264
 
@@ -38,28 +43,30 @@ public class VideoPlayer {
             mMediaCodec.release();
             mMediaCodec = null;
         }
-        m_LastInputBuffer = null;
+        mLastInputBuffer = null;
     }
 
     public void addData(byte[] data) {
         if (!initialised()) {
+            mDataBlocks = new ArrayList<byte[]>();
+            mBlockCount = 1;
             initialise(data);
-            mLastDataBlock = null;
         } else {
+            mBlockCount++;
             if (mAsync) {
-                if (mLastDataBlock != null) {
-                    System.out.println("Skipped block - " + mLastDataBlock.length + " bytes");
-                    mLastDataBlock = null;
+                if (mDataBlocks.size() >= (mBlockCount < 10 ? MAX_BLOCK_QUEUE_INIT : MAX_BLOCK_QUEUE)) {
+                    System.out.println("Skipped block - " + data.length + " bytes");
+                    return;
                 }
 
-                if (m_LastInputBuffer != null) {
+                if (mLastInputBuffer != null) {
                     System.out.println("Waited for block - " + data.length + " bytes");
-                    ByteBuffer buffer = m_LastInputBuffer;
-                    m_LastInputBuffer = null;
+                    ByteBuffer buffer = mLastInputBuffer;
+                    mLastInputBuffer = null;
 
-                    queueVideoData(buffer, m_LastInputIndex, data);
+                    queueVideoData(buffer, mLastInputIndex, data);
                 } else {
-                    mLastDataBlock = data;
+                    mDataBlocks.add(data);
                 }
             } else {
                 decodeData(data);
@@ -83,16 +90,16 @@ public class VideoPlayer {
                 mMediaCodec.setCallback(new MediaCodec.Callback() {
                     @Override
                     public void onInputBufferAvailable(MediaCodec codec, int index) {
-                        m_LastInputBuffer = null;
+                        mLastInputBuffer = null;
                         ByteBuffer inputBuffer = codec.getInputBuffer(index);
-                        if (mLastDataBlock != null) {
-                            byte[] data = mLastDataBlock;
-                            mLastDataBlock = null;
+                        if (mDataBlocks.size() > 0) {
+                            byte[] data = mDataBlocks.get(0);
+                            mDataBlocks.remove(0);
 
                             queueVideoData(inputBuffer, index, data);
                         } else {
-                            m_LastInputBuffer = inputBuffer;
-                            m_LastInputIndex = index;
+                            mLastInputBuffer = inputBuffer;
+                            mLastInputIndex = index;
                         }
                     }
 
@@ -123,6 +130,7 @@ public class VideoPlayer {
     }
 
     private void queueVideoData(ByteBuffer buffer, int index, byte[] data) {
+System.out.println("Video block: " + data.length + " bytes");
         buffer.put(data);
         long presentationTimeUs = System.currentTimeMillis() - startMs;
         mMediaCodec.queueInputBuffer(index, 0, data.length, presentationTimeUs, 0);

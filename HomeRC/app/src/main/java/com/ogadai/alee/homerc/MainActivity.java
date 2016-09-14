@@ -54,6 +54,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private Sensor mAccelerometer;
     private Sensor mMagneticField;
 
+    private int mVideoBlocksReceived;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -189,6 +191,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             setConnectionLight(ConnectionColours.AMBER);
             System.out.println("connecting to: " + mConnectionDetails.getAddress());
 
+            mVideoBlocksReceived = 0;
             SocketClient client = new SocketClient();
 
             client.addMessageHandler(new SocketClient.MessageHandler() {
@@ -199,7 +202,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
                 @Override
                 public void handleMessage(byte[] message) {
-                    mVideoFeed.addData(message);
+                    mVideoBlocksReceived++;
+                    if (mVideoBlocksReceived % 30 == 0) {
+                        sendMessageSync(new DeviceMessage("camera", "block-" + mVideoBlocksReceived));
+                    }
+                    mVideoPlayer.addData(message);
                 }
             });
 
@@ -212,7 +219,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             setConnectionLight(ConnectionColours.GREEN);
 
             // Start the camera
-            sendMessage(new DeviceMessage("camera", "on"));
+            String cameraMessage = "on-(" + mContentView.getWidth() + "," + mContentView.getHeight() + ")";
+            sendMessage(new DeviceMessage("camera", cameraMessage));
         } catch (Exception e) {
             System.out.println("error connecting socket: " + e.getMessage());
             setConnectionStatus("Error: " + e.getMessage());
@@ -273,12 +281,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         stopVideo();
 
         mVideoPlayer = new VideoPlayer(new Surface(mContentView.getSurfaceTexture()), mContentView.getWidth(), mContentView.getHeight());
-        mVideoFeed = new VideoFeed(new VideoFeed.Callback() {
-            @Override
-            public void onData(byte[] dataBlock) {
-                mVideoPlayer.addData(dataBlock);
-            }
-        });
+//        mVideoFeed = new VideoFeed(new VideoFeed.Callback() {
+//            @Override
+//            public void onData(byte[] dataBlock) {
+//                mVideoPlayer.addData(dataBlock);
+//            }
+//        });
     }
 
     private void stopVideo() {
@@ -292,21 +300,25 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         Thread worker = new Thread(new Runnable() {
             @Override
             public void run() {
-            Gson gson = new Gson();
-            String messageStr = gson.toJson(message);
-
-            System.out.println(messageStr);
-            if (mClient != null) {
-                try {
-                    mClient.sendMessage(messageStr);
-                } catch (Exception e) {
-                    System.out.println("error sending socket message: " + e.getMessage());
-                    disconnectSocket();
-                }
-            }
+                sendMessageSync(message);
             }
         });
         worker.start();
+    }
+
+    private void sendMessageSync(DeviceMessage message) {
+        Gson gson = new Gson();
+        String messageStr = gson.toJson(message);
+
+        System.out.println(messageStr);
+        if (mClient != null) {
+            try {
+                mClient.sendMessage(messageStr);
+            } catch (Exception e) {
+                System.out.println("error sending socket message: " + e.getMessage());
+                disconnectSocket();
+            }
+        }
     }
 
     float[] mGravity;
@@ -329,6 +341,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 SensorManager.getOrientation(R, orientation);
 
                 int roll = (int)(orientation[1] * 10);
+
+                // null zone
+                if (roll <= 2 && roll >= -2) roll = 0;
+
                 if (roll != mLastRoll) {
                     mLastRoll = roll;
 

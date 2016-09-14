@@ -20,8 +20,7 @@ function RaspiCamMock(opts) {
     var fileData,
         videoEmitter,
         running,
-        bytesPerChunk = 30000,
-        buffer = new Buffer(bytesPerChunk);
+        bytesPerChunk = 4096;
 
     function videoStart() {
         running = true;
@@ -41,6 +40,7 @@ function RaspiCamMock(opts) {
     }
 
     function sendVideoChunk() {
+        var buffer = new Buffer(bytesPerChunk);
         fs.read(fileData, buffer, 0, bytesPerChunk, null, function (err, bytesRead, buffer) {
             var useBuffer = buffer,
                 endOfFile = false;
@@ -58,8 +58,7 @@ function RaspiCamMock(opts) {
                 videoEmitter.emit('end');
                 self.stop();
             } else {
-                var timeout = Math.random() < 0.1 ? 30 : 40;
-                setTimeout(sendVideoChunk, 20);
+                setTimeout(sendVideoChunk, 4);
             }
         });
     }
