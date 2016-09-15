@@ -5,27 +5,18 @@ import org.glassfish.tyrus.client.auth.AuthenticationException;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.ByteBuffer;
-import java.util.List;
-import java.util.Map;
 
 import javax.websocket.ClientEndpoint;
-import javax.websocket.ClientEndpointConfig;
 import javax.websocket.CloseReason;
 import javax.websocket.ContainerProvider;
-import javax.websocket.Decoder;
 import javax.websocket.DeploymentException;
-import javax.websocket.Encoder;
 import javax.websocket.EndpointConfig;
-import javax.websocket.Extension;
 import javax.websocket.OnClose;
 import javax.websocket.OnMessage;
 import javax.websocket.OnOpen;
 import javax.websocket.Session;
 import javax.websocket.WebSocketContainer;
 
-/**
- * Created by alee on 15/04/2016.
- */
 @ClientEndpoint(subprotocols = {"echo-protocol"})
 public class SocketClient {
     private WebSocketContainer mContainer;
@@ -126,9 +117,9 @@ public class SocketClient {
         mUserSession.getAsyncRemote().sendBinary(ByteBuffer.wrap(message));
     }
 
-    public static interface MessageHandler {
-        public void handleMessage(String message);
-        public void handleMessage(byte[] message);
+    public interface MessageHandler {
+        void handleMessage(String message);
+        void handleMessage(byte[] message);
     }
 
 }

@@ -38,7 +38,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private EditText mConnectionAddress;
 
     private VideoPlayer mVideoPlayer;
-    private VideoFeed mVideoFeed;
 
     private enum ConnectionColours {
         RED,
@@ -279,14 +278,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private void initialiseVideo() {
         stopVideo();
-
         mVideoPlayer = new VideoPlayer(new Surface(mContentView.getSurfaceTexture()), mContentView.getWidth(), mContentView.getHeight());
-//        mVideoFeed = new VideoFeed(new VideoFeed.Callback() {
-//            @Override
-//            public void onData(byte[] dataBlock) {
-//                mVideoPlayer.addData(dataBlock);
-//            }
-//        });
     }
 
     private void stopVideo() {
