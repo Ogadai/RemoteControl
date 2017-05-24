@@ -1,9 +1,12 @@
 package com.ogadai.alee.homerc;
 
+import com.google.gson.Gson;
+
 import org.glassfish.tyrus.client.auth.AuthenticationException;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 
 import javax.websocket.ClientEndpoint;
@@ -18,7 +21,7 @@ import javax.websocket.Session;
 import javax.websocket.WebSocketContainer;
 
 @ClientEndpoint(subprotocols = {"echo-protocol"})
-public class SocketClient {
+public class SocketClient implements RemoteDevice {
     private WebSocketContainer mContainer;
     private Session mUserSession = null;
     private MessageHandler mMessageHandler = null;
@@ -27,8 +30,10 @@ public class SocketClient {
         mContainer = ContainerProvider.getWebSocketContainer();
     }
 
-    public void Connect(URI endpointURI) throws AuthenticationException, IOException, DeploymentException {
+    @Override
+    public void Connect(String address) throws AuthenticationException, IOException, DeploymentException, URISyntaxException {
         try {
+            URI endpointURI = new URI(address);
             mContainer.connectToServer(this, endpointURI);
         } catch(DeploymentException depEx) {
             Throwable cause = depEx.getCause();
@@ -39,6 +44,7 @@ public class SocketClient {
         }
     }
 
+    @Override
     public void Disconnect() {
         try {
             if (mUserSession != null) {
@@ -105,22 +111,11 @@ public class SocketClient {
         mMessageHandler = msgHandler;
     }
 
-    /**
-     * Send a message.
-     *
-     * @param message
-     */
-    public void sendMessage(String message) {
-        mUserSession.getAsyncRemote().sendText(message);
-    }
-    public void sendMessage(byte[] message) {
-        mUserSession.getAsyncRemote().sendBinary(ByteBuffer.wrap(message));
-    }
+    @Override
+    public void sendMessage(DeviceMessage message) {
+        Gson gson = new Gson();
+        String messageStr = gson.toJson(message);
 
-    public interface MessageHandler {
-        void handleMessage(String message);
-        void handleMessage(byte[] message);
+        mUserSession.getAsyncRemote().sendText(messageStr);
     }
-
 }
-

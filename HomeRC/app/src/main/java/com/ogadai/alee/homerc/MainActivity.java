@@ -1,16 +1,13 @@
 package com.ogadai.alee.homerc;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.SurfaceTexture;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.os.Handler;
 import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.TextureView;
@@ -19,11 +16,6 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
-
-import com.google.gson.Gson;
-
-import java.net.URI;
-import java.util.Enumeration;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -45,7 +37,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         GREEN
     }
 
-    private SocketClient mClient;
+    private RemoteDevice mRemoteDevice;
 
     private ConnectionDetails mConnectionDetails;
 
@@ -89,7 +81,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 Thread worker = new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        disconnectSocket();
+                        disconnect();
                     }
                 });
                 worker.start();
@@ -145,7 +137,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         Thread worker = new Thread(new Runnable() {
             @Override
             public void run() {
-                disconnectSocket();
+                disconnect();
             }
         });
         worker.start();
@@ -182,18 +174,27 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         });
     }
 
-    private void connectSocket() {
+    private RemoteDevice createRemoteDevice() {
+        String address = mConnectionDetails.getAddress();
+        if (address.startsWith("BLE:")) {
+            return new BluetoothClient();
+        } else {
+            return new SocketClient();
+        }
+    }
+
+    private void connect() {
         try {
-            disconnectSocket();
+            disconnect();
 
             setConnectionStatus("Connecting...");
             setConnectionLight(ConnectionColours.AMBER);
             System.out.println("connecting to: " + mConnectionDetails.getAddress());
 
             mVideoBlocksReceived = 0;
-            SocketClient client = new SocketClient();
 
-            client.addMessageHandler(new SocketClient.MessageHandler() {
+            RemoteDevice device = createRemoteDevice();
+            device.addMessageHandler(new MessageHandler() {
                 @Override
                 public void handleMessage(String message) {
 
@@ -209,10 +210,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 }
             });
 
-            URI uri = new URI(mConnectionDetails.getAddress());
-            client.Connect(uri);
-
-            mClient = client;
+            device.Connect(mConnectionDetails.getAddress());
+            mRemoteDevice = device;
 
             setConnectionStatus("");
             setConnectionLight(ConnectionColours.GREEN);
@@ -224,17 +223,17 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             System.out.println("error connecting socket: " + e.getMessage());
             setConnectionStatus("Error: " + e.getMessage());
             setConnectionLight(ConnectionColours.RED);
-            mClient = null;
+            mRemoteDevice = null;
         }
     }
 
-    private void disconnectSocket() {
-        if (mClient != null) {
-            mClient.Disconnect();
+    private void disconnect() {
+        if (mRemoteDevice != null) {
+            mRemoteDevice.Disconnect();
             setConnectionStatus("Disconnected");
             setConnectionLight(ConnectionColours.AMBER);
         }
-        mClient = null;
+        mRemoteDevice = null;
     }
 
     private void connectAsyncAndStreamVideo() {
@@ -242,7 +241,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         Thread worker = new Thread(new Runnable() {
             @Override
             public void run() {
-                connectSocket();
+                connect();
             }
         });
         worker.start();
@@ -299,16 +298,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     private void sendMessageSync(DeviceMessage message) {
-        Gson gson = new Gson();
-        String messageStr = gson.toJson(message);
-
-        System.out.println(messageStr);
-        if (mClient != null) {
+        if (mRemoteDevice != null) {
             try {
-                mClient.sendMessage(messageStr);
+                mRemoteDevice.sendMessage(message);
             } catch (Exception e) {
                 System.out.println("error sending socket message: " + e.getMessage());
-                disconnectSocket();
+                disconnect();
             }
         }
     }
