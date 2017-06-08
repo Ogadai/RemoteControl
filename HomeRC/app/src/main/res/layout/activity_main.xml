@@ -13,45 +13,8 @@
 
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-        <FrameLayout
-            android:id="@+id/fullscreen_content_controls"
-            style="?metaButtonBarStyle"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            tools:ignore="UselessParent">
-
-            <ImageButton
-                android:id="@+id/backward_button"
-                style="?metaButtonBarButtonStyle"
-                android:layout_width="150dp"
-                android:layout_height="200dp"
-                android:layout_weight="1"
-                android:layout_margin="5dp"
-                android:background="@drawable/bg_button"
-                android:layout_gravity="bottom|left"
-                android:clickable="true"
-                android:src="@drawable/backwards" />
-            <ImageButton
-                android:id="@+id/forward_button"
-                style="?metaButtonBarButtonStyle"
-                android:layout_width="150dp"
-                android:layout_height="200dp"
-                android:layout_margin="5dp"
-                android:layout_weight="1"
-                android:background="@drawable/bg_button"
-                android:layout_gravity="bottom|right"
-                android:clickable="true"
-                android:src="@drawable/forwards" />
-
-        </FrameLayout>
-    </FrameLayout>
-
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
+        android:layout_height="match_parent"
+        >
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -89,6 +52,74 @@
                 />
 
         </LinearLayout>
+
+        <FrameLayout
+            android:id="@+id/fullscreen_content_controls"
+            style="?metaButtonBarStyle"
+            android:layout_width="match_parent"
+            android:layout_height="300dp"
+            android:layout_gravity="bottom"
+            tools:ignore="UselessParent">
+
+            <ImageButton
+                android:id="@+id/left_button"
+                style="?metaButtonBarButtonStyle"
+                android:layout_width="150dp"
+                android:layout_height="150dp"
+                android:layout_weight="1"
+                android:layout_margin="5dp"
+                android:background="@drawable/bg_button"
+                android:layout_gravity="bottom|right"
+                android:clickable="true"
+                android:visibility="gone"
+                android:src="@drawable/backwards" />
+            <ImageButton
+                android:id="@+id/right_button"
+                style="?metaButtonBarButtonStyle"
+                android:layout_width="150dp"
+                android:layout_height="150dp"
+                android:layout_margin="5dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_button"
+                android:layout_gravity="top|right"
+                android:clickable="true"
+                android:visibility="gone"
+                android:src="@drawable/forwards" />
+            <ImageButton
+                android:id="@+id/backward_button"
+                style="?metaButtonBarButtonStyle"
+                android:layout_width="150dp"
+                android:layout_height="150dp"
+                android:layout_weight="1"
+                android:layout_margin="5dp"
+                android:background="@drawable/bg_button"
+                android:layout_gravity="bottom|left"
+                android:clickable="true"
+                android:src="@drawable/backwards" />
+            <ImageButton
+                android:id="@+id/forward_button"
+                style="?metaButtonBarButtonStyle"
+                android:layout_width="150dp"
+                android:layout_height="150dp"
+                android:layout_margin="5dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_button"
+                android:layout_gravity="bottom|right"
+                android:clickable="true"
+                android:src="@drawable/forwards" />
+
+            <TextView
+                android:id="@+id/temperature"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_gravity="bottom|center"
+                android:layout_margin="5dp"
+                android:text="0°"
+                android:textColor="#E0E080"
+                android:textSize="18dp" />
+
+        </FrameLayout>
     </FrameLayout>
 
     <FrameLayout
@@ -115,17 +146,32 @@
                 android:id="@+id/connection_address"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="5dp"
-                android:layout_marginBottom="5dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="10dp"
+                android:padding="5dp"
+                android:textSize="20dp"
+                android:text="jklasd"
                 android:background="@color/textbox_bg" />
 
-            <Button
-                android:id="@+id/connection_connect"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:background="@drawable/bg_button"
-                android:text="@string/connection_connect" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+                <Button
+                    android:id="@+id/connection_connect"
+                    android:layout_width="100dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/bg_button"
+                    android:text="@string/connection_connect" />
+
+                <CheckBox
+                    android:id="@+id/check_steering"
+                    style="?metaButtonBarButtonStyle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="20dp"
+                    android:text="@string/steering_option" />
+
+            </LinearLayout>
 
         </LinearLayout>
     </FrameLayout>

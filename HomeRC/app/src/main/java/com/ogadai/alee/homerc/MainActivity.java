@@ -13,9 +13,12 @@ import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import android.view.Gravity;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -28,8 +31,16 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private ImageButton mConnectionLight;
     private View mSettingsView;
     private EditText mConnectionAddress;
+    private CheckBox mCheckSteering;
 
     private VideoPlayer mVideoPlayer;
+
+    private TextView mTemperature;
+
+    ImageButton mForwards;
+    ImageButton mBackwards;
+    ImageButton mLeft;
+    ImageButton mRight;
 
     private enum ConnectionColours {
         RED,
@@ -40,6 +51,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private RemoteDevice mRemoteDevice;
 
     private ConnectionDetails mConnectionDetails;
+    private boolean mConnected;
 
     private SensorManager mSensorManager;
     private Sensor mAccelerometer;
@@ -66,8 +78,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         mSettingsView = findViewById(R.id.connection_settings);
         mConnectionAddress = (EditText)findViewById(R.id.connection_address);
+        mCheckSteering = (CheckBox)findViewById(R.id.check_steering);
+
+        mTemperature = (TextView)findViewById(R.id.temperature);
 
         mSettingsView.setVisibility(View.INVISIBLE);
+        mConnected = false;
 
         final Context context = this;
 
@@ -75,6 +91,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             @Override
             public void onClick(View v) {
                 mConnectionAddress.setText(mConnectionDetails.getAddress());
+                mCheckSteering.setChecked(mConnectionDetails.getSteering());
                 mSettingsView.setVisibility(View.VISIBLE);
 
                 stopVideo();
@@ -91,6 +108,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             @Override
             public void onClick(View v) {
                 mConnectionDetails.setAddress(mConnectionAddress.getText().toString());
+                mConnectionDetails.setSteering(mCheckSteering.isChecked());
                 mConnectionDetails.saveSettings(context);
 
                 mSettingsView.setVisibility(View.INVISIBLE);
@@ -103,11 +121,17 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         setConnectionStatus("Initialising...");
         setVisibility();
 
-        ImageButton forwards = (ImageButton)findViewById(R.id.forward_button);
-        forwards.setOnTouchListener(new ButtonTouchListener("forwards"));
+        mForwards = (ImageButton)findViewById(R.id.forward_button);
+        mForwards.setOnTouchListener(new ButtonTouchListener("forwards"));
 
-        ImageButton backwards = (ImageButton)findViewById(R.id.backward_button);
-        backwards.setOnTouchListener(new ButtonTouchListener("backwards"));
+        mBackwards = (ImageButton)findViewById(R.id.backward_button);
+        mBackwards.setOnTouchListener(new ButtonTouchListener("backwards"));
+
+        mLeft = (ImageButton)findViewById(R.id.left_button);
+        mLeft.setOnTouchListener(new ButtonTouchListener("left"));
+
+        mRight = (ImageButton)findViewById(R.id.right_button);
+        mRight.setOnTouchListener(new ButtonTouchListener("right"));
     }
 
     private void setVisibility() {
@@ -145,6 +169,15 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         mSensorManager.unregisterListener(this);
     }
 
+    private void setTemperature(final String temperature) {
+        final String tempStr = (temperature != null && temperature.length() > 0) ? temperature + "°" : "";
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mTemperature.setText(tempStr);
+            }
+        });
+    }
     private void setConnectionStatus(final String status) {
         runOnUiThread(new Runnable() {
             @Override
@@ -174,6 +207,20 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         });
     }
 
+    private void setupUIControls(final boolean steering) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mLeft.setVisibility(steering ? View.GONE : View.VISIBLE);
+                mRight.setVisibility(steering ? View.GONE : View.VISIBLE);
+
+                FrameLayout.LayoutParams params = (FrameLayout.LayoutParams)mForwards.getLayoutParams();
+                params.gravity = steering ? Gravity.BOTTOM | Gravity.RIGHT : Gravity.TOP | Gravity.LEFT;
+                mForwards.setLayoutParams(params);
+            }
+        });
+    }
+
     private RemoteDevice createRemoteDevice() {
         String address = mConnectionDetails.getAddress();
         if (address.startsWith("BLE:")) {
@@ -187,7 +234,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         try {
             disconnect();
 
+            setupUIControls(mConnectionDetails.getSteering());
             setConnectionStatus("Connecting...");
+            setTemperature("");
             setConnectionLight(ConnectionColours.AMBER);
             System.out.println("connecting to: " + mConnectionDetails.getAddress());
 
@@ -197,18 +246,24 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             device.addMessageHandler(new MessageHandler() {
                 @Override
                 public void connected() {
+                    mConnected = true;
                     setConnectionStatus("");
                     setConnectionLight(ConnectionColours.GREEN);
                 }
 
                 @Override
                 public void disconnected(String message) {
+                    mConnected = false;
                     setConnectionStatus(message);
                     setConnectionLight(ConnectionColours.RED);
                 }
 
                 @Override
-                public void handleMessage(DeviceMessage message) {
+                public void handleMessage(final DeviceMessage message) {
+                    mConnected = false;
+                    if (message.getName().equalsIgnoreCase("temperature")) {
+                        setTemperature(message.getState());
+                    }
                     System.out.println("received: " + message.getName() + "=" + message.getState());
                 }
 
@@ -245,6 +300,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             setConnectionLight(ConnectionColours.AMBER);
         }
         mRemoteDevice = null;
+        mConnected = false;
     }
 
     private void connectAsyncAndStreamVideo() {
@@ -299,13 +355,15 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     private void sendMessage(final DeviceMessage message) {
-        Thread worker = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                sendMessageSync(message);
-            }
-        });
-        worker.start();
+        if (mConnected) {
+            Thread worker = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    sendMessageSync(message);
+                }
+            });
+            worker.start();
+        }
     }
 
     private void sendMessageSync(DeviceMessage message) {

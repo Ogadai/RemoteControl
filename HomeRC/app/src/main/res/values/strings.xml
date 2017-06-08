@@ -9,4 +9,5 @@
     <string name="connection_connect">Connect</string>
     <string name="connection_setup">Setup</string>
     <string name="connection_status">Connecting...</string>
+    <string name="steering_option">Steering</string>
 </resources>
