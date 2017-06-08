@@ -1,15 +1,18 @@
-apply plugin: 'com.android.application'
+apply plugin: 'com.android.library'
 
 android {
     compileSdkVersion 25
     buildToolsVersion "25.0.1"
+    defaultPublishConfig "debug"
 
     defaultConfig {
-        applicationId "com.ogadai.alee.homerc"
         minSdkVersion 24
         targetSdkVersion 25
         versionCode 1
         versionName "1.0"
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
     }
     buildTypes {
         release {
@@ -20,13 +23,10 @@ android {
 }
 
 dependencies {
-    compile project(":microbitblue")
     compile fileTree(dir: 'libs', include: ['*.jar'])
+    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
+        exclude group: 'com.android.support', module: 'support-annotations'
+    })
+    compile 'com.android.support:appcompat-v7:25.3.1'
     testCompile 'junit:junit:4.12'
-    compile 'com.google.code.gson:gson:2.3'
-    compile 'com.android.support:appcompat-v7:25.0.0'
-    compile 'javax.websocket:javax.websocket-api:1.1'
-    compile 'org.glassfish.tyrus:tyrus-client:1.12'
-    compile 'org.glassfish.tyrus:tyrus-container-grizzly-client:1.12'
-    compile 'com.android.support:support-v4:25.0.0'
 }

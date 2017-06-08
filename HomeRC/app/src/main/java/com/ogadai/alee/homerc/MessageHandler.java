@@ -5,6 +5,8 @@ package com.ogadai.alee.homerc;
  */
 
 public interface MessageHandler {
-    void handleMessage(String message);
+    void connected();
+    void disconnected(String message);
+    void handleMessage(DeviceMessage message);
     void handleMessage(byte[] message);
 }

@@ -1,5 +1,7 @@
 package com.ogadai.alee.homerc;
 
+import android.content.Context;
+
 import com.google.gson.Gson;
 
 import org.glassfish.tyrus.client.auth.AuthenticationException;
@@ -31,7 +33,7 @@ public class SocketClient implements RemoteDevice {
     }
 
     @Override
-    public void Connect(String address) throws AuthenticationException, IOException, DeploymentException, URISyntaxException {
+    public void connect(Context context, String address) throws AuthenticationException, IOException, DeploymentException, URISyntaxException {
         try {
             URI endpointURI = new URI(address);
             mContainer.connectToServer(this, endpointURI);
@@ -45,7 +47,7 @@ public class SocketClient implements RemoteDevice {
     }
 
     @Override
-    public void Disconnect() {
+    public void disconnect() {
         try {
             if (mUserSession != null) {
                 Session session = mUserSession;
@@ -67,6 +69,9 @@ public class SocketClient implements RemoteDevice {
     public void onOpen(Session userSession, EndpointConfig config) {
         System.out.println("opening websocket");
         mUserSession = userSession;
+        if (mMessageHandler != null) {
+            mMessageHandler.connected();
+        }
     }
 
     /**
@@ -77,7 +82,11 @@ public class SocketClient implements RemoteDevice {
      */
     @OnClose
     public void onClose(Session userSession, CloseReason reason) {
-        System.out.println("closing websocket :" + reason.getCloseCode().getCode() + " - " + reason.getReasonPhrase());
+        String message = reason.getCloseCode().getCode() + " - " + reason.getReasonPhrase();
+        System.out.println("closing websocket :" + message);
+        if (mMessageHandler != null) {
+            mMessageHandler.disconnected(message);
+        }
         if (mUserSession != null) {
             mUserSession = null;
         }
@@ -91,7 +100,10 @@ public class SocketClient implements RemoteDevice {
     @OnMessage
     public void onMessage(String message) {
         if (mMessageHandler != null) {
-            mMessageHandler.handleMessage(message);
+            Gson gson = new Gson();
+            DeviceMessage deviceMessage = gson.fromJson(message, DeviceMessage.class);
+
+            mMessageHandler.handleMessage(deviceMessage);
         }
     }
 

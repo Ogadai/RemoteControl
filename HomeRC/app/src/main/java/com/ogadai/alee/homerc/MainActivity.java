@@ -196,8 +196,20 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             RemoteDevice device = createRemoteDevice();
             device.addMessageHandler(new MessageHandler() {
                 @Override
-                public void handleMessage(String message) {
+                public void connected() {
+                    setConnectionStatus("");
+                    setConnectionLight(ConnectionColours.GREEN);
+                }
 
+                @Override
+                public void disconnected(String message) {
+                    setConnectionStatus(message);
+                    setConnectionLight(ConnectionColours.RED);
+                }
+
+                @Override
+                public void handleMessage(DeviceMessage message) {
+                    System.out.println("received: " + message.getName() + "=" + message.getState());
                 }
 
                 @Override
@@ -210,11 +222,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 }
             });
 
-            device.Connect(mConnectionDetails.getAddress());
+            device.connect(this, mConnectionDetails.getAddress());
             mRemoteDevice = device;
 
-            setConnectionStatus("");
-            setConnectionLight(ConnectionColours.GREEN);
+            setConnectionLight(ConnectionColours.AMBER);
 
             // Start the camera
             String cameraMessage = "on-(" + mContentView.getWidth() + "," + mContentView.getHeight() + ")";
@@ -229,8 +240,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private void disconnect() {
         if (mRemoteDevice != null) {
-            mRemoteDevice.Disconnect();
-            setConnectionStatus("Disconnected");
+            mRemoteDevice.disconnect();
+            setConnectionStatus("Disconnecting");
             setConnectionLight(ConnectionColours.AMBER);
         }
         mRemoteDevice = null;
