@@ -260,7 +260,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
                 @Override
                 public void handleMessage(final DeviceMessage message) {
-                    mConnected = false;
                     if (message.getName().equalsIgnoreCase("temperature")) {
                         setTemperature(message.getState());
                     }

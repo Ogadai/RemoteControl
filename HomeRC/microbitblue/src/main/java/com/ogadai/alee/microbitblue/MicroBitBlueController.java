@@ -59,8 +59,9 @@ public class MicroBitBlueController {
             if (targetDevice != null) {
                 connectGatt(context, targetDevice);
             } else {
-                Log.i("MicroBitBlue", "Couldn't find paired '" + MICROBIT_DEVICE_NAME + "'");
-                mConnectCallback.failed();
+                String message = "Couldn't find paired '" + MICROBIT_DEVICE_NAME + "'";
+                Log.i("MicroBitBlue", message);
+                mConnectCallback.failed(message);
             }
         }
     }
@@ -253,6 +254,6 @@ public class MicroBitBlueController {
     public interface IConnectCallback {
         void connected();
         void disconnected();
-        void failed();
+        void failed(String message);
     }
 }

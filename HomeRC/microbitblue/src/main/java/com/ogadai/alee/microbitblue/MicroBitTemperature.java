@@ -54,7 +54,6 @@ public class MicroBitTemperature implements IMicroBitBlueService, IMicroBitBlueC
     @Override
     public void changed(byte[] value) {
         int intValue = MicroBitByteDecode.getShort(value);
-        Log.i("MicroBitEventTemp", "Temperature: " + intValue + "c");
         mHandler.onTemperature(intValue);
     }
 

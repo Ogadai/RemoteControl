@@ -134,7 +134,7 @@
             android:layout_margin="80dp"
             android:padding="5dp"
             android:orientation="vertical"
-            android:background="@color/colorAccent"
+            android:background="@color/settings_bg"
             tools:ignore="UselessParent">
 
             <TextView
@@ -165,10 +165,10 @@
 
                 <CheckBox
                     android:id="@+id/check_steering"
-                    style="?metaButtonBarButtonStyle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="20dp"
+                    android:checked="true"
                     android:text="@string/steering_option" />
 
             </LinearLayout>

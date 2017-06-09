@@ -6,6 +6,7 @@ import org.glassfish.tyrus.client.auth.AuthenticationException;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 
 import javax.websocket.DeploymentException;
 
@@ -24,7 +25,10 @@ public class BluetoothClient implements RemoteDevice {
     private MicroBitEventSender mLeftRight;
     private MicroBitEventSender mForwardsBackwards;
     private MicroBitEventSender mSteering;
+    private MicroBitEventSender mSteerDuration;
     private MicroBitTemperature mTemperature;
+
+    private ArrayList<DeviceMessage> mMessageQueue;
 
     public BluetoothClient() {
         mController = new MicroBitBlueController();
@@ -32,6 +36,7 @@ public class BluetoothClient implements RemoteDevice {
         mLeftRight = new MicroBitEventSender(1026);
         mForwardsBackwards = new MicroBitEventSender(1027);
         mSteering = new MicroBitEventSender(1028);
+        mSteerDuration = new MicroBitEventSender(1030);
         mTemperature = new MicroBitTemperature(new MicroBitTemperature.IHandler() {
             @Override
             public void onTemperature(int celcius) {
@@ -44,12 +49,16 @@ public class BluetoothClient implements RemoteDevice {
         mController.addService(mLeftRight);
         mController.addService(mForwardsBackwards);
         mController.addService(mSteering);
+        mController.addService(mSteerDuration);
         mController.addService(mTemperature);
+
+        mMessageQueue = new ArrayList<>();
     }
 
     @Override
     public void connect(Context context, String address) throws AuthenticationException, IOException, DeploymentException, URISyntaxException {
         System.out.println("Connecting : " + address);
+        final int steerDuration = getSteerDuration(address);
         mController.connect(context, new MicroBitBlueController.IConnectCallback() {
             @Override
             public void connected() {
@@ -57,6 +66,8 @@ public class BluetoothClient implements RemoteDevice {
                 if (mMessageHandler != null) {
                     mMessageHandler.connected();
                 }
+
+                mSteerDuration.send(steerDuration);
             }
 
             @Override
@@ -68,13 +79,21 @@ public class BluetoothClient implements RemoteDevice {
             }
 
             @Override
-            public void failed() {
-                System.out.println("Failed to connect bluetooth device");
+            public void failed(String message) {
+                System.out.println("Failed to connect bluetooth device - " + message);
                 if (mMessageHandler != null) {
-                    mMessageHandler.disconnected("Failed to connect bluetooth");
+                    mMessageHandler.disconnected(message);
                 }
             }
         });
+    }
+
+    private int getSteerDuration(String address) {
+        try {
+            return Integer.parseInt(address.substring(4));
+        } catch (Exception e) {
+            return 100;
+        }
     }
 
     @Override
@@ -92,23 +111,67 @@ public class BluetoothClient implements RemoteDevice {
     @Override
     public void sendMessage(DeviceMessage message)
     {
+        if (addMessageToQueue(message)) {
+            processMessageQueue();
+        }
+    }
+
+    private synchronized boolean addMessageToQueue(DeviceMessage message) {
+        mMessageQueue.add(message);
+        if (!mProcessingQueue) {
+            mProcessingQueue = true;
+            return true;
+        }
+        return false;
+    }
+
+    private synchronized DeviceMessage getNextMessageFromQueue() {
+        if (mMessageQueue.size() == 0) return null;
+        DeviceMessage message = mMessageQueue.get(0);
+        mMessageQueue.remove(0);
+        return message;
+    }
+
+    private boolean mProcessingQueue = false;
+    private void processMessageQueue() {
+        final DeviceMessage message = getNextMessageFromQueue();
+        if (message == null) {
+            mProcessingQueue = false;
+            return;
+        }
+
+        String name = message.getName();
+        MicroBitEventSender sender = null;
+        int value = 0;
+
         // "forwards/backwards/left/right":"on"/"off"
         // "steering": -100 => 100
-        if (mMessageHandler != null) {
-            String name = message.getName();
-            if (name.equalsIgnoreCase("forwards")) {
-                mForwardsBackwards.send(message.getState().equalsIgnoreCase("on") ? 2 : 0);
-            } else if (name.equalsIgnoreCase("backwards")) {
-                mForwardsBackwards.send(message.getState().equalsIgnoreCase("on") ? 1 : 0);
-            } else if (name.equalsIgnoreCase("right")) {
-                mLeftRight.send(message.getState().equalsIgnoreCase("on") ? 2 : 0);
-            } else if (name.equalsIgnoreCase("left")) {
-                mLeftRight.send(message.getState().equalsIgnoreCase("on") ? 1 : 0);
-            } else if (name.equalsIgnoreCase("steering")) {
-                int steering = Integer.parseInt(message.getState());
-                mSteering.send(steering + 100);
-            }
+        if (name.equalsIgnoreCase("forwards")) {
+            sender = mForwardsBackwards;
+            value = message.getState().equalsIgnoreCase("on") ? 2 : 0;
+        } else if (name.equalsIgnoreCase("backwards")) {
+            sender = mForwardsBackwards;
+            value = message.getState().equalsIgnoreCase("on") ? 1 : 0;
+        } else if (name.equalsIgnoreCase("right")) {
+            sender = mLeftRight;
+            value = message.getState().equalsIgnoreCase("on") ? 2 : 0;
+        } else if (name.equalsIgnoreCase("left")) {
+            sender = mLeftRight;
+            value = message.getState().equalsIgnoreCase("on") ? 1 : 0;
+        } else if (name.equalsIgnoreCase("steering")) {
+            sender = mSteering;
+            value = Integer.parseInt(message.getState()) + 100;
         }
-        System.out.println(message.getName() + ": " + message.getState());
+
+        if (sender != null) {
+            sender.send(value, new Runnable() {
+                @Override
+                public void run() {
+                    System.out.println("completed: " + message.getName() + ": " + message.getState());
+                    processMessageQueue();
+                }
+            });
+            System.out.println(message.getName() + ": " + message.getState());
+        }
     }
 }
