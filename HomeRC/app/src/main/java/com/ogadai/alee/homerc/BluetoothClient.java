@@ -92,7 +92,7 @@ public class BluetoothClient implements RemoteDevice {
         try {
             return Integer.parseInt(address.substring(4));
         } catch (Exception e) {
-            return 100;
+            return 0;
         }
     }
 
@@ -117,6 +117,13 @@ public class BluetoothClient implements RemoteDevice {
     }
 
     private synchronized boolean addMessageToQueue(DeviceMessage message) {
+        for(DeviceMessage existing : mMessageQueue) {
+            if (message.getName().compareToIgnoreCase(existing.getName()) == 0) {
+                existing.setState(message.getState());
+                return true;
+            }
+        }
+
         mMessageQueue.add(message);
         if (!mProcessingQueue) {
             mProcessingQueue = true;
