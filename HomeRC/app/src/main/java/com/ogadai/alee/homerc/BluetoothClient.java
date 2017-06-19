@@ -1,12 +1,14 @@
 package com.ogadai.alee.homerc;
 
 import android.content.Context;
+import android.util.Log;
 
 import org.glassfish.tyrus.client.auth.AuthenticationException;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.zip.DeflaterInputStream;
 
 import javax.websocket.DeploymentException;
 
@@ -29,6 +31,11 @@ public class BluetoothClient implements RemoteDevice {
     private MicroBitTemperature mTemperature;
 
     private ArrayList<DeviceMessage> mMessageQueue;
+
+    private boolean mContinuousSteeringMode = false;
+    private int mLastLeftRightState = 0;
+
+    private static final String TAG = "BluetoothClient";
 
     public BluetoothClient() {
         mController = new MicroBitBlueController();
@@ -68,6 +75,7 @@ public class BluetoothClient implements RemoteDevice {
                 }
 
                 mSteerDuration.send(steerDuration);
+                mContinuousSteeringMode = (steerDuration != 0);
             }
 
             @Override
@@ -111,6 +119,42 @@ public class BluetoothClient implements RemoteDevice {
     @Override
     public void sendMessage(DeviceMessage message)
     {
+        boolean useMessage = true;
+        if (!mContinuousSteeringMode) {
+            useMessage = false;
+            String name = message.getName();
+            String state = message.getState();
+
+            int nextLeftRightState = 0;
+            if (name.equalsIgnoreCase("right")) {
+                nextLeftRightState = state.equalsIgnoreCase("on") ? 2 : 0;
+            } else if (name.equalsIgnoreCase("left")) {
+                nextLeftRightState = state.equalsIgnoreCase("on") ? 1 : 0;
+            } else if (name.equalsIgnoreCase("steering")) {
+                int steering = Integer.parseInt(state);
+                if (steering < -30) {
+                    nextLeftRightState = 1;
+                } else if (steering > 30) {
+                    nextLeftRightState = 2;
+                } else {
+                    nextLeftRightState = 0;
+                }
+            } else {
+                useMessage = true;
+            }
+
+            if (nextLeftRightState != mLastLeftRightState) {
+                queueMessage(new DeviceMessage("leftright", Integer.toString(nextLeftRightState)));
+                mLastLeftRightState = nextLeftRightState;
+            }
+        }
+
+        if (useMessage) {
+            queueMessage(message);
+        }
+    }
+
+    private void queueMessage(DeviceMessage message) {
         if (addMessageToQueue(message)) {
             processMessageQueue();
         }
@@ -168,17 +212,19 @@ public class BluetoothClient implements RemoteDevice {
         } else if (name.equalsIgnoreCase("steering")) {
             sender = mSteering;
             value = Integer.parseInt(message.getState()) + 100;
+        } else if (name.equalsIgnoreCase("leftright")) {
+            sender = mLeftRight;
+            value = Integer.parseInt(message.getState());
         }
 
         if (sender != null) {
             sender.send(value, new Runnable() {
                 @Override
                 public void run() {
-                    System.out.println("completed: " + message.getName() + ": " + message.getState());
                     processMessageQueue();
                 }
             });
-            System.out.println(message.getName() + ": " + message.getState());
+            Log.i(TAG, message.getName() + ": " + message.getState());
         }
     }
 }
