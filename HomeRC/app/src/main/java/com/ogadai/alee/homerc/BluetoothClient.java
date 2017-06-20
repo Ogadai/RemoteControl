@@ -87,6 +87,13 @@ public class BluetoothClient implements RemoteDevice {
             }
 
             @Override
+            public void status(String message) {
+                if (mMessageHandler != null) {
+                    mMessageHandler.status(message);
+                }
+            }
+
+            @Override
             public void failed(String message) {
                 System.out.println("Failed to connect bluetooth device - " + message);
                 if (mMessageHandler != null) {

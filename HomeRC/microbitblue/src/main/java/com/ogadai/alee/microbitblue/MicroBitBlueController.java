@@ -7,11 +7,20 @@ import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothProfile;
+import android.bluetooth.le.BluetoothLeScanner;
+import android.bluetooth.le.ScanCallback;
+import android.bluetooth.le.ScanFilter;
+import android.bluetooth.le.ScanResult;
+import android.bluetooth.le.ScanSettings;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -23,6 +32,10 @@ public class MicroBitBlueController {
 
     private BluetoothAdapter mBluetoothAdapter;
     private BluetoothGatt mBluetoothGatt;
+
+    private Context mReceiverContext;
+    private BroadcastReceiver mReceiver;
+    private boolean mFoundDevice;
 
     private ArrayList<IMicroBitBlueService> mServices;
 
@@ -41,10 +54,6 @@ public class MicroBitBlueController {
         mServices = new ArrayList<>();
     }
 
-    public boolean isEnabled() {
-        return mBluetoothAdapter.isEnabled();
-    }
-
     public void connect(Context context) {
         connect(context, null);
     }
@@ -57,11 +66,15 @@ public class MicroBitBlueController {
         } else {
             BluetoothDevice targetDevice = queryPairedDevices(MICROBIT_DEVICE_NAME);
             if (targetDevice != null) {
+                String message = "Trying to connect '" + MICROBIT_DEVICE_NAME + "'";
+                Log.i("MicroBitBlue", message);
+                mConnectCallback.status(message);
                 connectGatt(context, targetDevice);
             } else {
-                String message = "Couldn't find paired '" + MICROBIT_DEVICE_NAME + "'";
+                String message = "Looking for '" + MICROBIT_DEVICE_NAME + "'";
                 Log.i("MicroBitBlue", message);
-                mConnectCallback.failed(message);
+                mConnectCallback.status(message);
+                discoverDevices(context, MICROBIT_DEVICE_NAME);
             }
         }
     }
@@ -70,6 +83,12 @@ public class MicroBitBlueController {
         reset();
         if (mBluetoothGatt != null) {
             mBluetoothGatt.disconnect();
+        }
+
+        if (mReceiver != null) {
+            mReceiverContext.unregisterReceiver(mReceiver);
+            mReceiver = null;
+            mReceiverContext = null;
         }
     }
 
@@ -132,6 +151,50 @@ public class MicroBitBlueController {
                 mBluetoothGatt.setCharacteristicNotification(characteristic, false);
             }
         }
+    }
+
+    private void discoverDevices(Context context, final String targetName) {
+        // Register for broadcasts when a device is discovered.
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(BluetoothDevice.ACTION_FOUND);
+        filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED);
+        filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
+
+        mFoundDevice = false;
+        mReceiver = new BroadcastReceiver() {
+            public void onReceive(Context context, Intent intent) {
+                String action = intent.getAction();
+                if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
+                    mBluetoothAdapter.cancelDiscovery();
+
+                    if (!mFoundDevice) {
+                        mConnectCallback.failed("Couldn't find " + targetName);
+                    }
+                } else if (BluetoothDevice.ACTION_FOUND.equals(action)) {
+                    // Discovery has found a device. Get the BluetoothDevice
+                    // object and its info from the Intent.
+                    BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                    String deviceName = device.getName();
+                    if (deviceName != null && deviceName.length() >= targetName.length()
+                            && deviceName.toLowerCase().substring(0, targetName.length()).compareTo(targetName) == 0) {
+                        mFoundDevice = true;
+                        String message = "Trying to connect '" + MICROBIT_DEVICE_NAME + "'";
+                        Log.i("MicroBitBlue", message);
+                        mConnectCallback.status(message);
+                        connectGatt(context, device);
+                    }
+
+                }
+            }
+        };
+
+        mReceiverContext = context;
+        mReceiverContext.registerReceiver(mReceiver, filter);
+
+        if (mBluetoothAdapter.isDiscovering()) {
+            mBluetoothAdapter.cancelDiscovery();
+        }
+        mBluetoothAdapter.startDiscovery();
     }
 
     private BluetoothDevice queryPairedDevices(String targetName) {
@@ -255,5 +318,6 @@ public class MicroBitBlueController {
         void connected();
         void disconnected();
         void failed(String message);
+        void status(String message);
     }
 }

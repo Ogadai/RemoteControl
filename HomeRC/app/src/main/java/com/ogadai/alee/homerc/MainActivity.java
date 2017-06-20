@@ -1,6 +1,13 @@
 package com.ogadai.alee.homerc;
 
+import android.Manifest;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.graphics.SurfaceTexture;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -8,6 +15,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.TextureView;
@@ -58,6 +66,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private Sensor mMagneticField;
 
     private int mVideoBlocksReceived;
+
+    private boolean mTriedTurningOnBT = false;
+    private boolean mTriedBTDiscovery = false;
+    private static final int REQUEST_ENABLE_BT = 5827;
+    private static final int REQUEST_COURSE_LCOATION = 5830;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -114,7 +127,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 mSettingsView.setVisibility(View.INVISIBLE);
                 setVisibility();
 
-                setupVideoTexture();
+                mTriedTurningOnBT = false;
+                mTriedBTDiscovery = false;
+                initialiseConnection();
             }
         });
 
@@ -132,6 +147,23 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         mRight = (ImageButton)findViewById(R.id.right_button);
         mRight.setOnTouchListener(new ButtonTouchListener("right"));
+
+        initialiseConnection();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        stopVideo();
+        Thread worker = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                disconnect();
+            }
+        });
+        worker.start();
+
     }
 
     private void setVisibility() {
@@ -148,7 +180,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         super.onResume();
         setVisibility();
 
-        setupVideoTexture();
         mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_UI);
         mSensorManager.registerListener(this, mMagneticField, SensorManager.SENSOR_DELAY_UI);
     }
@@ -156,15 +187,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     @Override
     protected void onPause() {
         super.onPause();
-
-        stopVideo();
-        Thread worker = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                disconnect();
-            }
-        });
-        worker.start();
 
         mSensorManager.unregisterListener(this);
     }
@@ -222,13 +244,18 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     private RemoteDevice createRemoteDevice() {
-        String address = mConnectionDetails.getAddress();
-        if (address.startsWith("BLE:")) {
+        if (isBluetoothDevice()) {
             return new BluetoothClient();
         } else {
             return new SocketClient();
         }
     }
+
+    private boolean isBluetoothDevice() {
+        String address = mConnectionDetails.getAddress();
+        return address.startsWith("BLE:");
+    }
+
 
     private void connect() {
         try {
@@ -249,6 +276,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     mConnected = true;
                     setConnectionStatus("");
                     setConnectionLight(ConnectionColours.GREEN);
+                }
+
+                @Override
+                public void status(String message) {
+                    setConnectionStatus(message);
                 }
 
                 @Override
@@ -300,10 +332,72 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         }
         mRemoteDevice = null;
         mConnected = false;
+
+        BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        mBluetoothAdapter.cancelDiscovery();
     }
 
     private void connectAsyncAndStreamVideo() {
         initialiseVideo();
+        Thread worker = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                connect();
+            }
+        });
+        worker.start();
+    }
+
+    private void initialiseConnection() {
+        if (isBluetoothDevice()) {
+            BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+            if (mBluetoothAdapter == null) {
+                // Device does not support Bluetooth
+                setConnectionStatus("Bluetooth is not supported");
+                return;
+            }
+
+            if (!mBluetoothAdapter.isEnabled()) {
+                if (!mTriedTurningOnBT) {
+                    Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                    startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+                } else {
+                    setConnectionStatus("Bluetooth is not enabled");
+                }
+            } else {
+                checkBluetoothPermissions();
+            }
+        } else {
+            setupVideoTexture();
+        }
+    }
+
+    private void checkBluetoothPermissions() {
+        mTriedBTDiscovery = true;
+        requestPermissions(new String[] { Manifest.permission.ACCESS_COARSE_LOCATION }, REQUEST_COURSE_LCOATION);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case REQUEST_COURSE_LCOATION:
+                if (grantResults.length > 0) {
+                    for (int gr : grantResults) {
+                        // Check if request is granted or not
+                        if (gr != PackageManager.PERMISSION_GRANTED) {
+                            return;
+                        }
+                    }
+
+                    connectBluetoothDevice();
+                }
+                break;
+            default:
+                return;
+        }
+    }
+
+    private void connectBluetoothDevice() {
         Thread worker = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -373,6 +467,22 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 System.out.println("error sending socket message: " + e.getMessage());
                 disconnect();
             }
+        }
+    }
+
+    @Override
+    public void onActivityResult (int requestCode,
+                                  int resultCode,
+                                  Intent data) {
+        switch(requestCode) {
+            case REQUEST_ENABLE_BT:
+                if (resultCode == RESULT_OK) {
+                    checkBluetoothPermissions();
+                } else {
+                    mTriedTurningOnBT = true;
+                    setConnectionStatus("Bluetooth is not enabled");
+                }
+                break;
         }
     }
 
