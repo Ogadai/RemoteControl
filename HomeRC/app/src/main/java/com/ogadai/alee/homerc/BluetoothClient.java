@@ -27,6 +27,7 @@ public class BluetoothClient implements RemoteDevice {
     private MicroBitEventSender mLeftRight;
     private MicroBitEventSender mForwardsBackwards;
     private MicroBitEventSender mSteering;
+    private MicroBitEventSender mActions;
     private MicroBitEventSender mSteerDuration;
     private MicroBitTemperature mTemperature;
 
@@ -43,6 +44,7 @@ public class BluetoothClient implements RemoteDevice {
         mLeftRight = new MicroBitEventSender(1026);
         mForwardsBackwards = new MicroBitEventSender(1027);
         mSteering = new MicroBitEventSender(1028);
+        mActions = new MicroBitEventSender(1029);
         mSteerDuration = new MicroBitEventSender(1030);
         mTemperature = new MicroBitTemperature(new MicroBitTemperature.IHandler() {
             @Override
@@ -56,6 +58,7 @@ public class BluetoothClient implements RemoteDevice {
         mController.addService(mLeftRight);
         mController.addService(mForwardsBackwards);
         mController.addService(mSteering);
+        mController.addService(mActions);
         mController.addService(mSteerDuration);
         mController.addService(mTemperature);
 
@@ -222,6 +225,9 @@ public class BluetoothClient implements RemoteDevice {
         } else if (name.equalsIgnoreCase("leftright")) {
             sender = mLeftRight;
             value = Integer.parseInt(message.getState());
+        } else if (name.equalsIgnoreCase("horn")) {
+            sender = mActions;
+            value = message.getState().equalsIgnoreCase("on") ? 1 : 0;
         }
 
         if (sender != null) {

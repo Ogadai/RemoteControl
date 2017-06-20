@@ -178,6 +178,8 @@ public class MicroBitBlueController {
                     if (deviceName != null && deviceName.length() >= targetName.length()
                             && deviceName.toLowerCase().substring(0, targetName.length()).compareTo(targetName) == 0) {
                         mFoundDevice = true;
+                        mBluetoothAdapter.cancelDiscovery();
+
                         String message = "Trying to connect '" + MICROBIT_DEVICE_NAME + "'";
                         Log.i("MicroBitBlue", message);
                         mConnectCallback.status(message);

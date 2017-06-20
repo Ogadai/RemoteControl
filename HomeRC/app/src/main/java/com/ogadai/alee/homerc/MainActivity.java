@@ -13,6 +13,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -49,6 +50,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     ImageButton mBackwards;
     ImageButton mLeft;
     ImageButton mRight;
+    ImageButton mHorn;
 
     private enum ConnectionColours {
         RED,
@@ -60,6 +62,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private ConnectionDetails mConnectionDetails;
     private boolean mConnected;
+
+    private Handler mReconnectHandler;
+    private Runnable mReconnectRunnable;
 
     private SensorManager mSensorManager;
     private Sensor mAccelerometer;
@@ -147,6 +152,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         mRight = (ImageButton)findViewById(R.id.right_button);
         mRight.setOnTouchListener(new ButtonTouchListener("right"));
+
+        mHorn = (ImageButton)findViewById(R.id.horn_button);
+        mHorn.setOnTouchListener(new ButtonTouchListener("horn"));
 
         initialiseConnection();
     }
@@ -288,6 +296,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     mConnected = false;
                     setConnectionStatus(message);
                     setConnectionLight(ConnectionColours.RED);
+
+                    reconnectOnDelay();
                 }
 
                 @Override
@@ -325,6 +335,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     private void disconnect() {
+        cancelReconnectOnDelay();
+
         if (mRemoteDevice != null) {
             mRemoteDevice.disconnect();
             setConnectionStatus("Disconnecting");
@@ -335,6 +347,27 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         mBluetoothAdapter.cancelDiscovery();
+    }
+
+    private void reconnectOnDelay() {
+        mReconnectHandler = new Handler();
+        mReconnectRunnable = new Runnable() {
+            @Override
+            public void run() {
+                //Do something after 100ms
+                connect();
+            }
+        };
+
+        mReconnectHandler.postDelayed(mReconnectRunnable, 5000);
+    }
+
+    private void cancelReconnectOnDelay() {
+        if (mReconnectHandler != null) {
+            mReconnectHandler.removeCallbacks(mReconnectRunnable);
+            mReconnectHandler = null;
+            mReconnectRunnable = null;
+        }
     }
 
     private void connectAsyncAndStreamVideo() {

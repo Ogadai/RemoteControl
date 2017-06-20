@@ -108,6 +108,18 @@
                 android:clickable="true"
                 android:src="@drawable/forwards" />
 
+            <ImageButton
+                android:id="@+id/horn_button"
+                style="?metaButtonBarButtonStyle"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:layout_margin="5dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_button"
+                android:layout_gravity="top|center"
+                android:clickable="true"
+                android:src="@drawable/horn" />
+
             <TextView
                 android:id="@+id/temperature"
                 android:layout_width="wrap_content"
