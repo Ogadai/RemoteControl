@@ -529,7 +529,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD)
             mGeomagnetic = event.values;
 
-        if (mGravity != null && mGeomagnetic != null) {
+        if (mConnectionDetails.getSteering() && mGravity != null && mGeomagnetic != null) {
             float R[] = new float[9];
             float I[] = new float[9];
             boolean success = SensorManager.getRotationMatrix(R, I, mGravity, mGeomagnetic);
