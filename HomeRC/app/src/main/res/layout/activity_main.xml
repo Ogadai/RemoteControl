@@ -135,49 +135,95 @@
     </FrameLayout>
 
     <FrameLayout
+        android:id="@+id/connection_settings"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:background="@color/black_overlay"
+        >
 
         <LinearLayout
-            android:id="@+id/connection_settings"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:layout_margin="80dp"
-            android:padding="5dp"
+            android:layout_margin="40dp"
+            android:padding="10dp"
             android:orientation="vertical"
             android:background="@color/settings_bg"
             tools:ignore="UselessParent">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/connection_label"  />
-
-            <EditText
-                android:id="@+id/connection_address"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:layout_marginBottom="10dp"
-                android:padding="5dp"
-                android:textSize="20dp"
-                android:text="jklasd"
-                android:background="@color/textbox_bg" />
-
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                >
+
                 <Button
                     android:id="@+id/connection_connect"
                     android:layout_width="100dp"
                     android:layout_height="40dp"
                     android:background="@drawable/bg_button"
+                    android:elevation="1dp"
                     android:text="@string/connection_connect" />
+
+                <EditText
+                    android:id="@+id/connection_address"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginTop="2dp"
+                    android:background="@color/textbox_bg"
+                    android:padding="5dp"
+                    android:text="jklasd"
+                    android:textSize="20dp" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="@string/motor1"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                >
+
+                <CheckBox
+                    android:id="@+id/motor1_swap"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="true"
+                    android:text="@string/motor_swap" />
+
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="@string/motor2"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                >
+
+                <CheckBox
+                    android:id="@+id/motor2_swap"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="true"
+                    android:text="@string/motor_swap" />
 
                 <CheckBox
                     android:id="@+id/check_steering"
-                    android:layout_width="match_parent"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="20dp"
                     android:checked="true"

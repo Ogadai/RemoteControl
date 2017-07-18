@@ -41,6 +41,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private View mSettingsView;
     private EditText mConnectionAddress;
     private CheckBox mCheckSteering;
+    private CheckBox mCheckMotor1Swap;
+    private CheckBox mCheckMotor2Swap;
 
     private VideoPlayer mVideoPlayer;
 
@@ -77,6 +79,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private static final int REQUEST_ENABLE_BT = 5827;
     private static final int REQUEST_COURSE_LCOATION = 5830;
 
+    private static final String TAG = "MainActivity";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -97,6 +101,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         mSettingsView = findViewById(R.id.connection_settings);
         mConnectionAddress = (EditText)findViewById(R.id.connection_address);
         mCheckSteering = (CheckBox)findViewById(R.id.check_steering);
+        mCheckMotor1Swap = (CheckBox)findViewById(R.id.motor1_swap);
+        mCheckMotor2Swap = (CheckBox)findViewById(R.id.motor2_swap);
 
         mTemperature = (TextView)findViewById(R.id.temperature);
 
@@ -110,6 +116,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             public void onClick(View v) {
                 mConnectionAddress.setText(mConnectionDetails.getAddress());
                 mCheckSteering.setChecked(mConnectionDetails.getSteering());
+                mCheckMotor1Swap.setChecked(mConnectionDetails.getMotor1Swap());
+                mCheckMotor2Swap.setChecked(mConnectionDetails.getMotor2Swap());
+
                 mSettingsView.setVisibility(View.VISIBLE);
 
                 stopVideo();
@@ -127,6 +136,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             public void onClick(View v) {
                 mConnectionDetails.setAddress(mConnectionAddress.getText().toString());
                 mConnectionDetails.setSteering(mCheckSteering.isChecked());
+                mConnectionDetails.setMotor1Swap(mCheckMotor1Swap.isChecked());
+                mConnectionDetails.setMotor2Swap(mCheckMotor2Swap.isChecked());
                 mConnectionDetails.saveSettings(context);
 
                 mSettingsView.setVisibility(View.INVISIBLE);
@@ -142,16 +153,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         setVisibility();
 
         mForwards = (ImageButton)findViewById(R.id.forward_button);
-        mForwards.setOnTouchListener(new ButtonTouchListener("forwards"));
-
         mBackwards = (ImageButton)findViewById(R.id.backward_button);
-        mBackwards.setOnTouchListener(new ButtonTouchListener("backwards"));
-
         mLeft = (ImageButton)findViewById(R.id.left_button);
-        mLeft.setOnTouchListener(new ButtonTouchListener("left"));
-
         mRight = (ImageButton)findViewById(R.id.right_button);
-        mRight.setOnTouchListener(new ButtonTouchListener("right"));
 
         mHorn = (ImageButton)findViewById(R.id.horn_button);
         mHorn.setOnTouchListener(new ButtonTouchListener("horn"));
@@ -247,6 +251,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 FrameLayout.LayoutParams params = (FrameLayout.LayoutParams)mForwards.getLayoutParams();
                 params.gravity = steering ? Gravity.BOTTOM | Gravity.RIGHT : Gravity.TOP | Gravity.LEFT;
                 mForwards.setLayoutParams(params);
+
+                mForwards.setOnTouchListener(new ButtonTouchListener(mConnectionDetails.getMotor1Swap() ? "backwards" : "forwards"));
+                mBackwards.setOnTouchListener(new ButtonTouchListener(mConnectionDetails.getMotor1Swap() ? "forwards" : "backwards"));
+                mLeft.setOnTouchListener(new ButtonTouchListener(mConnectionDetails.getMotor2Swap() ? "right" : "left"));
+                mRight.setOnTouchListener(new ButtonTouchListener(mConnectionDetails.getMotor2Swap() ? "left" : "right"));
             }
         });
     }
@@ -346,7 +355,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         mConnected = false;
 
         BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        mBluetoothAdapter.cancelDiscovery();
+        if (mBluetoothAdapter != null) {
+            mBluetoothAdapter.cancelDiscovery();
+        }
     }
 
     private void reconnectOnDelay() {
@@ -489,6 +500,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 }
             });
             worker.start();
+        } else {
+            Log.i(TAG, "send " + message.getName() + ":" + message.getState());
         }
     }
 
@@ -546,7 +559,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 if (roll != mLastRoll) {
                     mLastRoll = roll;
 
-                    sendMessage(new DeviceMessage("steering", Integer.toString((mLastRoll * -10))));
+                    String msgValue = Integer.toString((mLastRoll * (mConnectionDetails.getMotor2Swap() ? 10 : -10)));
+
+                    sendMessage(new DeviceMessage("steering", msgValue));
                 }
 
             }
