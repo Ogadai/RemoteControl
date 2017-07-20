@@ -135,7 +135,7 @@ public class BluetoothClient implements RemoteDevice {
             String name = message.getName();
             String state = message.getState();
 
-            int nextLeftRightState = 0;
+            int nextLeftRightState = mLastLeftRightState;
             if (name.equalsIgnoreCase("right")) {
                 nextLeftRightState = state.equalsIgnoreCase("on") ? 2 : 0;
             } else if (name.equalsIgnoreCase("left")) {
