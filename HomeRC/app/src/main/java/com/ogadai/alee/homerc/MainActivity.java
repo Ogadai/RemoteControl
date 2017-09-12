@@ -63,10 +63,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private RemoteDevice mRemoteDevice;
 
     private ConnectionDetails mConnectionDetails;
+    private boolean mShouldBeConnected;
     private boolean mConnected;
 
-    private Handler mReconnectHandler;
+    private Handler mDelayHandler;
     private Runnable mReconnectRunnable;
+
+    private Runnable mSteerRunnable;
+    private DeviceMessage mSteerMessage;
 
     private SensorManager mSensorManager;
     private Sensor mAccelerometer;
@@ -87,6 +91,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         setContentView(R.layout.activity_main);
 
+        mDelayHandler = new Handler();
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         mMagneticField = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
@@ -108,6 +113,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         mSettingsView.setVisibility(View.INVISIBLE);
         mConnected = false;
+        mShouldBeConnected = false;
 
         final Context context = this;
 
@@ -278,6 +284,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         try {
             disconnect();
 
+            mShouldBeConnected = true;
             setupUIControls(mConnectionDetails.getSteering());
             setConnectionStatus("Connecting...");
             setTemperature("");
@@ -306,7 +313,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     setConnectionStatus(message);
                     setConnectionLight(ConnectionColours.RED);
 
-                    reconnectOnDelay();
+                    if (mShouldBeConnected) {
+                        reconnectOnDelay();
+                    }
                 }
 
                 @Override
@@ -345,6 +354,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private void disconnect() {
         cancelReconnectOnDelay();
+        cancelDelaySteer();
+
+        mShouldBeConnected = false;
 
         if (mRemoteDevice != null) {
             mRemoteDevice.disconnect();
@@ -361,7 +373,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     private void reconnectOnDelay() {
-        mReconnectHandler = new Handler();
         mReconnectRunnable = new Runnable() {
             @Override
             public void run() {
@@ -370,13 +381,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             }
         };
 
-        mReconnectHandler.postDelayed(mReconnectRunnable, 5000);
+        mDelayHandler.postDelayed(mReconnectRunnable, 5000);
     }
 
     private void cancelReconnectOnDelay() {
-        if (mReconnectHandler != null) {
-            mReconnectHandler.removeCallbacks(mReconnectRunnable);
-            mReconnectHandler = null;
+        if (mReconnectRunnable!= null) {
+            mDelayHandler.removeCallbacks(mReconnectRunnable);
             mReconnectRunnable = null;
         }
     }
@@ -534,7 +544,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     float[] mGravity;
     float[] mGeomagnetic;
-    int mLastRoll = 0;
+    float mLastRoll = 0;
     @Override
     public void onSensorChanged(SensorEvent event) {
         if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER)
@@ -551,20 +561,38 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 float orientation[] = new float[3];
                 SensorManager.getOrientation(R, orientation);
 
-                int roll = (int)(orientation[1] * 10);
+                float roll = orientation[1] * 10;
 
                 // null zone
                 if (roll <= 2 && roll >= -2) roll = 0;
 
-                if (roll != mLastRoll) {
+                if (Math.abs(roll - mLastRoll) > 2) {
                     mLastRoll = roll;
 
-                    String msgValue = Integer.toString((mLastRoll * (mConnectionDetails.getMotor2Swap() ? 10 : -10)));
+                    String msgValue = Integer.toString(((int)mLastRoll * (mConnectionDetails.getMotor2Swap() ? 10 : -10)));
 
-                    sendMessage(new DeviceMessage("steering", msgValue));
+                    mSteerMessage = new DeviceMessage("steering", msgValue);
+
+                    if (mSteerRunnable == null) {
+                        mSteerRunnable = new Runnable() {
+                            @Override
+                            public void run() {
+                                mSteerRunnable = null;
+                                sendMessage(mSteerMessage);
+                            }
+                        };
+                        mDelayHandler.postDelayed(mSteerRunnable, 100);
+                    }
                 }
 
             }
+        }
+    }
+
+    private void cancelDelaySteer() {
+        if (mSteerRunnable != null) {
+            mDelayHandler.removeCallbacks(mSteerRunnable);
+            mSteerRunnable = null;
         }
     }
 
