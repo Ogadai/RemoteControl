@@ -339,8 +339,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             device.connect(this, mConnectionDetails.getAddress());
             mRemoteDevice = device;
 
-            setConnectionLight(ConnectionColours.AMBER);
-
             // Start the camera
             String cameraMessage = "on-(" + mContentView.getWidth() + "," + mContentView.getHeight() + ")";
             sendMessage(new DeviceMessage("camera", cameraMessage));
@@ -359,9 +357,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         mShouldBeConnected = false;
 
         if (mRemoteDevice != null) {
-            mRemoteDevice.disconnect();
             setConnectionStatus("Disconnecting");
             setConnectionLight(ConnectionColours.AMBER);
+            mRemoteDevice.disconnect();
         }
         mRemoteDevice = null;
         mConnected = false;

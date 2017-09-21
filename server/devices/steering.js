@@ -15,8 +15,9 @@ class SteeringDevice extends EventEmitter {
     }
 
     this.position = 0;
-    this.max = config.max;
-    this.limit = 50;
+    this.max = config.max || 100;
+    this.limit = config.limit || 100;
+    this.duration = 0;
 
     this.timer = null;
     this.startTime = null;
@@ -26,9 +27,21 @@ class SteeringDevice extends EventEmitter {
   setState(state) {
     this.stop();
 
-    let command = this.getCommand(parseInt(state));
-    if (command.direction && command.timeOn > 0) {
-      this.moveTo(command);
+    if (state.startsWith('duration:')) {
+      this.duration = parseInt(state.substring(9));
+    } else if (state === "right") {
+      if (this.gpio) this.setGpio(1);
+    } else if (state === "left") {
+      if (this.gpio) this.setGpio(-1);
+    } else if (state === "off") {
+      if (this.gpio) this.setGpio(0);
+    } else {
+      let command = this.getCommand(parseInt(state));
+      if (command.direction && command.timeOn > 0) {
+        this.moveTo(command);
+      } else if (this.gpio) {
+        this.setGpio(0);
+      }
     }
   }
 
@@ -51,6 +64,10 @@ class SteeringDevice extends EventEmitter {
     this.timer = setTimeout(() => {
       this.timer = null;
       this.stop();
+
+      if (this.gpio) {
+  	    this.setGpio(0);
+      }
     }, command.timeOn);
   }
 
@@ -65,16 +82,11 @@ class SteeringDevice extends EventEmitter {
       let endTime = new Date().getTime();
       this.updatePosition(this.direction, endTime - this.startTime);
 
-      if (this.gpio) {
-	this.setGpio((this.position === -this.limit) ? -1 : ((this.position === this.limit) ? 1 : 0));
-      }
-
       this.direction = null;
     }
   }
 
   setGpio(offset) {
-console.log('steering: ' + offset);
     this.gpio.left.writeSync(offset < 0 ? 1 : 0);
     this.gpio.right.writeSync(offset > 0 ? 1 : 0);
   }
@@ -82,18 +94,20 @@ console.log('steering: ' + offset);
   getCommand(state) {
     // Return the time +ve/-ve required for the motor
     let direction = state < 0 ? 'left' : 'right';
+    let max = this.duration > 0 ? this.duration : this.max;
 
     return {
       direction: state < this.position ? 'left' : 'right',
-      timeOn: Math.abs((this.position - state) * this.max / this.limit)
+      timeOn: Math.abs((this.position - state) * max / this.limit)
     };
   }
 
   updatePosition(direction, timeOn) {
-    let dist = this.limit * timeOn / this.max,
+    let max = this.duration > 0 ? this.duration : this.max;
+    let dist = this.limit * timeOn / max,
         sign = direction === 'left' ? -1 : 1,
         newPosition = this.position + sign * dist;
-    
+
     if (newPosition > this.limit)
       newPosition = this.limit
     else if (newPosition < -this.limit)

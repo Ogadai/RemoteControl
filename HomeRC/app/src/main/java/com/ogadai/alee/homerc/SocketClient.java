@@ -27,6 +27,7 @@ public class SocketClient implements RemoteDevice {
     private WebSocketContainer mContainer;
     private Session mUserSession = null;
     private MessageHandler mMessageHandler = null;
+    private int mSteerDuration;
 
     public SocketClient() {
         mContainer = ContainerProvider.getWebSocketContainer();
@@ -34,6 +35,7 @@ public class SocketClient implements RemoteDevice {
 
     @Override
     public void connect(Context context, String address) throws AuthenticationException, IOException, DeploymentException, URISyntaxException {
+        mSteerDuration = getSteerDuration(address);
         try {
             URI endpointURI = new URI(address);
             mContainer.connectToServer(this, endpointURI);
@@ -59,7 +61,6 @@ public class SocketClient implements RemoteDevice {
         }
     }
 
-
     /**
      * Callback hook for Connection open events.
      *
@@ -72,6 +73,8 @@ public class SocketClient implements RemoteDevice {
         if (mMessageHandler != null) {
             mMessageHandler.connected();
         }
+
+        sendMessage(new DeviceMessage("steering", "duration:" + Integer.toString(mSteerDuration)));
     }
 
     /**
@@ -125,9 +128,28 @@ public class SocketClient implements RemoteDevice {
 
     @Override
     public void sendMessage(DeviceMessage message) {
+        DeviceMessage useMessage = message;
+
+        if (message.getName().equalsIgnoreCase("left") || message.getName().equalsIgnoreCase("right")) {
+            useMessage = new DeviceMessage("steering",
+                    message.getState().equalsIgnoreCase("on") ? message.getName() : "off");
+        }
+
         Gson gson = new Gson();
-        String messageStr = gson.toJson(message);
+        String messageStr = gson.toJson(useMessage);
 
         mUserSession.getAsyncRemote().sendText(messageStr);
+    }
+
+    private int getSteerDuration(String address) {
+        try {
+            int index = address.indexOf('/', 5);
+            if (index != -1) {
+                return Integer.parseInt(address.substring(index + 1));
+            }
+            return 0;
+        } catch (Exception e) {
+            return 0;
+        }
     }
 }

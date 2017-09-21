@@ -32,7 +32,7 @@ let wsServer = new WebSocketServer({
 let deviceList = new DeviceList(settings.devices, 'RC');
 
 wsServer.on('request', request => {
-  console.log('Web Socket opened from ', request.origin);
+  console.log(`Web Socket opened from ${request.origin} for ${request.resource}`);
   let connection = request.accept('echo-protocol', request.origin);
 
   connection.on('message', message => {
