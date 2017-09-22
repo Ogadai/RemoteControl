@@ -117,7 +117,7 @@
                 android:layout_margin="5dp"
                 android:layout_weight="1"
                 android:background="@drawable/bg_button"
-                android:layout_gravity="top|center"
+                android:layout_gravity="bottom|center"
                 android:clickable="true"
                 android:src="@drawable/horn" />
 

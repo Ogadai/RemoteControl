@@ -30,16 +30,16 @@ class SteeringDevice extends EventEmitter {
     if (state.startsWith('duration:')) {
       this.duration = parseInt(state.substring(9));
     } else if (state === "right") {
-      if (this.gpio) this.setGpio(1);
+      this.setGpio(1);
     } else if (state === "left") {
-      if (this.gpio) this.setGpio(-1);
+      this.setGpio(-1);
     } else if (state === "off") {
-      if (this.gpio) this.setGpio(0);
+      this.setGpio(0);
     } else {
       let command = this.getCommand(parseInt(state));
       if (command.direction && command.timeOn > 0) {
         this.moveTo(command);
-      } else if (this.gpio) {
+      } else {
         this.setGpio(0);
       }
     }
@@ -57,17 +57,13 @@ class SteeringDevice extends EventEmitter {
     this.startTime = new Date().getTime();
     this.direction = command.direction;
 
-    if (this.gpio) {
-      this.setGpio(command.direction === 'left' ? -1 : 1);
-    }
+    this.setGpio(command.direction === 'left' ? -1 : 1);
 
     this.timer = setTimeout(() => {
       this.timer = null;
       this.stop();
 
-      if (this.gpio) {
-  	    this.setGpio(0);
-      }
+      this.setGpio(0);
     }, command.timeOn);
   }
 
@@ -87,8 +83,10 @@ class SteeringDevice extends EventEmitter {
   }
 
   setGpio(offset) {
-    this.gpio.left.writeSync(offset < 0 ? 1 : 0);
-    this.gpio.right.writeSync(offset > 0 ? 1 : 0);
+    if (this.gpio) {
+      this.gpio.left.writeSync(offset < 0 ? 1 : 0);
+      this.gpio.right.writeSync(offset > 0 ? 1 : 0);
+    }
   }
 
   getCommand(state) {

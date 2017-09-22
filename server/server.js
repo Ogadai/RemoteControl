@@ -30,10 +30,19 @@ let wsServer = new WebSocketServer({
 });
 
 let deviceList = new DeviceList(settings.devices, 'RC');
+let redLight = deviceList.getDevice('redLight');
+if (redLight) {
+  redLight.setState('on');
+}
 
 wsServer.on('request', request => {
   console.log(`Web Socket opened from ${request.origin} for ${request.resource}`);
   let connection = request.accept('echo-protocol', request.origin);
+
+  let yellowLight = deviceList.getDevice('yellowLight');
+  if (yellowLight) {
+    yellowLight.setState('on');
+  }
 
   connection.on('message', message => {
     if (message.type === 'utf8') {
@@ -64,6 +73,9 @@ wsServer.on('request', request => {
     deviceList.removeListener('changed', changedMessage);
     deviceList.removeListener('video', sendVideo);
     connection = null;
+    if (yellowLight) {
+      yellowLight.setState('off');
+    }
   });
 
   function changedMessage(name, state) {
