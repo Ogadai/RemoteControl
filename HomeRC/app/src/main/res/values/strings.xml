@@ -13,5 +13,7 @@
     <string name="motor1">Motor 1</string>
     <string name="motor2">Motor 2</string>
     <string name="motor_swap">Swap direction</string>
+    <string name="profile_a">Profile A</string>
+    <string name="profile_b">Profile B</string>
 
 </resources>

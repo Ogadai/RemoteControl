@@ -22,8 +22,8 @@ public class VideoPlayer extends MediaCodec.Callback {
     private int mLastInputIndex;
 
     private static final String VIDEO_FORMAT = "video/avc"; // h.264
-    private static final int MAX_BLOCK_QUEUE_INIT = 10;
-    private static final int MAX_BLOCK_QUEUE = 1;
+    private static final int MAX_BLOCK_QUEUE_INIT = 20;
+    private static final int MAX_BLOCK_QUEUE = 2;
 
     public VideoPlayer(Surface surface, int width, int height) {
         mSurface = surface;
@@ -37,7 +37,7 @@ public class VideoPlayer extends MediaCodec.Callback {
             mMediaCodec.release();
             mMediaCodec = null;
         }
-        mLastInputBuffer = null;
+        setLastInputBuffer(null, 0);
     }
 
     public void addData(byte[] data) {
@@ -48,13 +48,11 @@ public class VideoPlayer extends MediaCodec.Callback {
             initialise(data);
         } else {
             mBlockCount++;
-            if (mLastInputBuffer != null) {
+            ByteBuffer lastInputBuffer = getLastInputBuffer();
+            if (lastInputBuffer != null) {
                 // Input Buffer is waiting for data, so feed it immediately
                 System.out.println("Waited for block - " + data.length + " bytes");
-                ByteBuffer buffer = mLastInputBuffer;
-                mLastInputBuffer = null;
-
-                queueVideoData(buffer, mLastInputIndex, data);
+                queueVideoData(lastInputBuffer, mLastInputIndex, data);
             } else {
                 // To reduce lag, skip some blocks if we get a lot queued up
                 if (mDataBlocks.size() >= (mBlockCount < 10 ? MAX_BLOCK_QUEUE_INIT : MAX_BLOCK_QUEUE)) {
@@ -92,7 +90,7 @@ public class VideoPlayer extends MediaCodec.Callback {
 
     @Override
     public void onInputBufferAvailable(MediaCodec codec, int index) {
-        mLastInputBuffer = null;
+        setLastInputBuffer(null, 0);
         ByteBuffer inputBuffer = codec.getInputBuffer(index);
         if (mDataBlocks.size() > 0) {
             // Data available, so fill the imput buffer and queue it
@@ -100,8 +98,7 @@ public class VideoPlayer extends MediaCodec.Callback {
             queueVideoData(inputBuffer, index, data);
         } else {
             // Data not arrived, so keep the input buffer until we get some
-            mLastInputBuffer = inputBuffer;
-            mLastInputIndex = index;
+            setLastInputBuffer(inputBuffer, index);
         }
     }
 
@@ -124,6 +121,17 @@ public class VideoPlayer extends MediaCodec.Callback {
         buffer.put(data);
         long presentationTimeUs = System.currentTimeMillis() - startMs;
         mMediaCodec.queueInputBuffer(index, 0, data.length, presentationTimeUs, 0);
+    }
+
+    private synchronized ByteBuffer getLastInputBuffer() {
+        ByteBuffer buffer = mLastInputBuffer;
+        mLastInputBuffer = null;
+        return buffer;
+    }
+
+    private synchronized void setLastInputBuffer(ByteBuffer buffer, int index) {
+        mLastInputBuffer = buffer;
+        mLastInputIndex = index;
     }
 
 }

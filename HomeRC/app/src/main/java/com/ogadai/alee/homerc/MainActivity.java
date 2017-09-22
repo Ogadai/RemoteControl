@@ -26,6 +26,7 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
+import android.widget.RadioButton;
 import android.widget.TextView;
 import android.view.Gravity;
 
@@ -39,6 +40,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private TextView mConnectionStatus;
     private ImageButton mConnectionLight;
     private View mSettingsView;
+    private RadioButton mProfileA;
+    private RadioButton mProfileB;
     private EditText mConnectionAddress;
     private CheckBox mCheckSteering;
     private CheckBox mCheckMotor1Swap;
@@ -104,6 +107,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         mConnectionLight = (ImageButton) findViewById(R.id.connection_light);
 
         mSettingsView = findViewById(R.id.connection_settings);
+        mProfileA = (RadioButton) findViewById(R.id.connection_profile_a);
+        mProfileB = (RadioButton) findViewById(R.id.connection_profile_b);
         mConnectionAddress = (EditText)findViewById(R.id.connection_address);
         mCheckSteering = (CheckBox)findViewById(R.id.check_steering);
         mCheckMotor1Swap = (CheckBox)findViewById(R.id.motor1_swap);
@@ -120,11 +125,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         ((ImageButton)findViewById(R.id.connection_setup)).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mConnectionAddress.setText(mConnectionDetails.getAddress());
-                mCheckSteering.setChecked(mConnectionDetails.getSteering());
-                mCheckMotor1Swap.setChecked(mConnectionDetails.getMotor1Swap());
-                mCheckMotor2Swap.setChecked(mConnectionDetails.getMotor2Swap());
-
+                if (mConnectionDetails.getProfile().equalsIgnoreCase("B")) {
+                    mProfileB.setChecked(true);
+                } else {
+                    mProfileA.setChecked(true);
+                }
+                displayConnectionSettings();
                 mSettingsView.setVisibility(View.VISIBLE);
 
                 stopVideo();
@@ -154,6 +160,18 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 initialiseConnection();
             }
         });
+        ((RadioButton)findViewById(R.id.connection_profile_a)).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                changeConnectionProfile();
+            }
+        });
+        ((RadioButton)findViewById(R.id.connection_profile_b)).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                changeConnectionProfile();
+            }
+        });
 
         setConnectionStatus("Initialising...");
         setVisibility();
@@ -167,6 +185,19 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         mHorn.setOnTouchListener(new ButtonTouchListener("horn"));
 
         initialiseConnection();
+    }
+
+    private void displayConnectionSettings() {
+        mConnectionAddress.setText(mConnectionDetails.getAddress());
+        mCheckSteering.setChecked(mConnectionDetails.getSteering());
+        mCheckMotor1Swap.setChecked(mConnectionDetails.getMotor1Swap());
+        mCheckMotor2Swap.setChecked(mConnectionDetails.getMotor2Swap());
+    }
+
+    private void changeConnectionProfile() {
+        String profile = mProfileB.isChecked() ? "B" : "";
+        mConnectionDetails.readSettings(this, profile);
+        displayConnectionSettings();
     }
 
     @Override
