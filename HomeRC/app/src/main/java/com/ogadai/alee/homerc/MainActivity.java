@@ -82,9 +82,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private int mVideoBlocksReceived;
 
     private boolean mTriedTurningOnBT = false;
-    private boolean mTriedBTDiscovery = false;
     private static final int REQUEST_ENABLE_BT = 5827;
-    private static final int REQUEST_COURSE_LCOATION = 5830;
+    private static final int REQUEST_COURSE_LOCATION = 5830;
 
     private static final String TAG = "MainActivity";
 
@@ -156,7 +155,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 setVisibility();
 
                 mTriedTurningOnBT = false;
-                mTriedBTDiscovery = false;
                 initialiseConnection();
             }
         });
@@ -456,29 +454,30 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     private void checkBluetoothPermissions() {
-        mTriedBTDiscovery = true;
-        requestPermissions(new String[] { Manifest.permission.ACCESS_COARSE_LOCATION }, REQUEST_COURSE_LCOATION);
+// requestPermissions of ACCESS_COARSE_LOCATION required for SDK 23 or over
+//        requestPermissions(new String[] { Manifest.permission.ACCESS_COARSE_LOCATION }, REQUEST_COURSE_LOCATION);
+        connectBluetoothDevice();
     }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
-        switch (requestCode) {
-            case REQUEST_COURSE_LCOATION:
-                if (grantResults.length > 0) {
-                    for (int gr : grantResults) {
-                        // Check if request is granted or not
-                        if (gr != PackageManager.PERMISSION_GRANTED) {
-                            return;
-                        }
-                    }
-
-                    connectBluetoothDevice();
-                }
-                break;
-            default:
-                return;
-        }
-    }
+//
+//    @Override
+//    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+//        switch (requestCode) {
+//            case REQUEST_COURSE_LOCATION:
+//                if (grantResults.length > 0) {
+//                    for (int gr : grantResults) {
+//                        // Check if request is granted or not
+//                        if (gr != PackageManager.PERMISSION_GRANTED) {
+//                            return;
+//                        }
+//                    }
+//
+//                    connectBluetoothDevice();
+//                }
+//                break;
+//            default:
+//                return;
+//        }
+//    }
 
     private void connectBluetoothDevice() {
         Thread worker = new Thread(new Runnable() {

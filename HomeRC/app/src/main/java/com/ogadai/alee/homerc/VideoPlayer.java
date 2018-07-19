@@ -73,7 +73,7 @@ public class VideoPlayer extends MediaCodec.Callback {
     private void initialise(byte[] csd0) {
         // Create the format based on the first block of data
         MediaFormat format = MediaFormat.createVideoFormat(VIDEO_FORMAT, mWidth, mHeight);
-        format.setInteger(MediaFormat.KEY_ROTATION, 180);
+//        format.setInteger(MediaFormat.KEY_ROTATION, 180);
         format.setByteBuffer("csd-0", ByteBuffer.wrap(csd0));
         try {
             mMediaCodec = MediaCodec.createDecoderByType(VIDEO_FORMAT);
