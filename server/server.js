@@ -30,7 +30,7 @@ let wsServer = new WebSocketServer({
 });
 
 let deviceList = new DeviceList(settings.devices, 'RC');
-let redLight = deviceList.getDevice('redLight');
+let redLight = deviceList.getDevice('red-light');
 if (redLight) {
   redLight.setState('on');
 }
@@ -39,9 +39,13 @@ wsServer.on('request', request => {
   console.log(`Web Socket opened from ${request.origin} for ${request.resource}`);
   let connection = request.accept('echo-protocol', request.origin);
 
-  let yellowLight = deviceList.getDevice('yellowLight');
-  if (yellowLight) {
-    yellowLight.setState('on');
+  let redLightInterval;
+  let redOn = false;
+  if (redLight) {
+    redLightInterval = setInterval(() => {
+      redOn = !redOn;
+      redLight.setState(redOn ? 'on' : 'off');
+    }, 500);
   }
 
   connection.on('message', message => {
@@ -73,8 +77,10 @@ wsServer.on('request', request => {
     deviceList.removeListener('changed', changedMessage);
     deviceList.removeListener('video', sendVideo);
     connection = null;
-    if (yellowLight) {
-      yellowLight.setState('off');
+
+    if (redLight) {
+      clearInterval(redLightInterval);
+      redLight.setState('on');
     }
   });
 
@@ -92,3 +98,28 @@ wsServer.on('request', request => {
   deviceList.on('changed', changedMessage);
   deviceList.on('video', sendVideo);
 });
+
+process.stdin.resume();//so the program will not close instantly
+
+function exitHandler(options, err) {
+    if (options.cleanup) {
+      if (redLight) {
+        redLight.setState('off');
+      }
+    }
+    if (err) console.log(err.stack);
+    if (options.exit) process.exit();
+}
+
+//do something when app is closing
+process.on('exit', exitHandler.bind(null,{cleanup:true}));
+
+//catches ctrl+c event
+process.on('SIGINT', exitHandler.bind(null, {exit:true}));
+
+// catches "kill pid" (for example: nodemon restart)
+process.on('SIGUSR1', exitHandler.bind(null, {exit:true}));
+process.on('SIGUSR2', exitHandler.bind(null, {exit:true}));
+
+//catches uncaught exceptions
+process.on('uncaughtException', exitHandler.bind(null, {exit:true}));
