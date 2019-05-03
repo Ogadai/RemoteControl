@@ -18,6 +18,7 @@ class SteeringDevice extends EventEmitter {
     this.max = config.max || 100;
     this.limit = config.limit || 100;
     this.duration = 0;
+    this.onoff = config.onoff;
 
     this.timer = null;
     this.startTime = null;
@@ -35,6 +36,14 @@ class SteeringDevice extends EventEmitter {
       this.setGpio(-1);
     } else if (state === "off") {
       this.setGpio(0);
+    } else if (this.onoff) {
+      const position = parseInt(state);
+      if (position > 30)
+        this.setGpio(1);
+      else if (position < -30)
+        this.setGpio(-1);
+      else
+        this.setGpio(0);
     } else {
       let command = this.getCommand(parseInt(state));
       if (command.direction && command.timeOn > 0) {
