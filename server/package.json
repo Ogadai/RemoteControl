@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "nodemon server.js",
-    "create-cert": "openssl req -nodes -new -x509 -keyout server.key -out server.cert"
+    "create-cert": "openssl req -nodes -new -x509 -sha256 -keyout server.key -out server.cert"
   },
   "author": "",
   "license": "ISC",

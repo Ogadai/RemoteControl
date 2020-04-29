@@ -3,7 +3,7 @@
 const EventEmitter = require('events'),
       Gpio = require('./gpio');
 
-const INTERVAL = 10;
+const INTERVAL = 1;
 const INTERVAL_STEPS = 10;
 
 const MAX_TURN = 30;
@@ -91,9 +91,11 @@ class DriveDevice extends EventEmitter {
     if (this.state.left !== 0 || this.state.left !== 0) {
       if (!this.interval) {
         this.interval = setInterval(() => this.onInterval(), INTERVAL);
+        this.onInterval();
       }
     } else if (this.interval) {
       clearInterval(this.interval);
+      this.onInterval();
       this.interval = null;
     }
   }
@@ -101,7 +103,7 @@ class DriveDevice extends EventEmitter {
   onInterval() {
     this.intervalStep++;
     if (this.intervalStep >= INTERVAL_STEPS) {
-      this.intervalStep = INTERVAL_STEPS;
+      this.intervalStep = 0;
     }
 
     if (this.gpio) {
@@ -116,7 +118,7 @@ class DriveDevice extends EventEmitter {
     const pin = speed < 0 ? back : forward;
     const altPin = speed < 0 ? forward : back;
 
-    pin.writeSync(this.intervalStep <= Math.abs(speed) * INTERVAL_STEPS ? 1 : 0);
+    pin.writeSync(this.intervalStep <= (Math.abs(speed) * INTERVAL_STEPS) ? 1 : 0);
     altPin.writeSync(0);
   }
 }

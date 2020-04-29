@@ -1,6 +1,7 @@
 "use strict"
 
 const fs = require('fs'),
+    path = require('path'),
     http = require('http'),
     https = require('https'),
     moment = require('moment'),
@@ -29,8 +30,8 @@ webSocket(server);
 
 if (settings.securePort) {
   const httpsServer = https.createServer({
-    key: fs.readFileSync('server.key'),
-    cert: fs.readFileSync('server.cert')
+    key: fs.readFileSync(path.resolve('./server.key'), 'utf8'),
+    cert: fs.readFileSync(path.resolve('./server.cert'), 'utf8')
   }, robotApp);
   httpsServer.listen(settings.securePort, onListen('https|wss', settings.securePort, false));
   webSocket(httpsServer);

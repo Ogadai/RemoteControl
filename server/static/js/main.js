@@ -8,7 +8,7 @@ const query = selector => document.querySelector(selector);
 const { hostname, protocol } = window.location;
 
 const imgElement = query('#imgVideo');
-imgElement.src = `${protocol}${hostname}:3001/?action=stream`;
+imgElement.src = `http://${hostname}:3001/?action=stream`;
 
 fullScreen(query('#btnFullScreen'));
 
