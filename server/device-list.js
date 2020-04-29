@@ -4,7 +4,8 @@ const EventEmitter = require('events'),
       deviceType = {
         onoff: require('./devices/onoff'),
         steering: require('./devices/steering'),
-        camera: require('./devices/camera')
+        camera: require('./devices/camera'),
+        drive: require('./devices/drive')
       };
 
 class DeviceList extends EventEmitter {

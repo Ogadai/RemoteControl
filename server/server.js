@@ -1,111 +1,46 @@
 "use strict"
 
-const WebSocketServer = require('websocket').server,
+const fs = require('fs'),
     http = require('http'),
+    https = require('https'),
     moment = require('moment'),
-    DeviceList = require('./device-list'),
     getIP = require('./get-ip'),
     settings = require('./settings'),
-    notify = require('./notify');
+    notify = require('./notify'),
+    app = require('./app'),
+    webSocket = require('./web-socket');
 
-let server = http.createServer((request, response) => {
-  console.log((new Date()) + ' Received request for ' + request.url);
-  response.writeHead(404);
-  response.write('Remote Control - 404');
-  response.end();
-});
-server.listen(settings.port, () => {
-  let addr = 'ws://' + getIP() + ':' + settings.port,
+const ipAddress = getIP();
+const onListen = (protocol, port, doNotify) => () => {
+  let addr = `{${protocol}}://${ipAddress}:${port}`,
       dateNow = moment().format('LLL');
   console.log(dateNow + ' Server is listening at ' + addr);
 
-  if (settings.notifyOptions) {
+  if (doNotify && settings.notifyOptions) {
     notify(settings.notifyOptions, addr, dateNow);
   }
-});
+};
+  
+const robotApp = app();
 
-let wsServer = new WebSocketServer({
-  httpServer: server,
-  autoAcceptConnections: false
-});
+const server = http.createServer(robotApp);
+server.listen(settings.port, onListen('http|ws', settings.port, true));
+webSocket(server);
 
-let deviceList = new DeviceList(settings.devices, 'RC');
-let redLight = deviceList.getDevice('red-light');
-if (redLight) {
-  redLight.setState('on');
+if (settings.securePort) {
+  const httpsServer = https.createServer({
+    key: fs.readFileSync('server.key'),
+    cert: fs.readFileSync('server.cert')
+  }, robotApp);
+  httpsServer.listen(settings.securePort, onListen('https|wss', settings.securePort, false));
+  webSocket(httpsServer);
 }
-
-wsServer.on('request', request => {
-  console.log(`Web Socket opened from ${request.origin} for ${request.resource}`);
-  let connection = request.accept('echo-protocol', request.origin);
-
-  let redLightInterval;
-  let redOn = false;
-  if (redLight) {
-    redLightInterval = setInterval(() => {
-      redOn = !redOn;
-      redLight.setState(redOn ? 'on' : 'off');
-    }, 500);
-  }
-
-  connection.on('message', message => {
-    if (message.type === 'utf8') {
-      try {
-        let decodedMsg = JSON.parse(message.utf8Data),
-            device = deviceList.getDevice(decodedMsg.name),
-            state = decodedMsg.state;
-
-        if (device) {
-          device.setState(state);
-          console.log(decodedMsg.name + ' set: ' + state);
-        } else {
-          console.log('unknown device: ', decodedMsg);
-        }
-      } catch(e) {
-        console.error('error processing message: ', message.utf8Data);
-        console.error(e);
-      }
-    }
-    else if (message.type === 'binary') {
-      console.log('Received Binary Message of ' + message.binaryData.length + ' bytes');
-    }
-  });
-  connection.on('close', (reasonCode, description) => {
-    console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
-
-    deviceList.reset();
-    deviceList.removeListener('changed', changedMessage);
-    deviceList.removeListener('video', sendVideo);
-    connection = null;
-
-    if (redLight) {
-      clearInterval(redLightInterval);
-      redLight.setState('on');
-    }
-  });
-
-  function changedMessage(name, state) {
-    if (connection) {
-      connection.sendUTF(name + ' changed: ' + state);
-    }
-  }
-  function sendVideo(data) {
-    if (connection) {
-      connection.sendBytes(data);
-    }
-  }
-
-  deviceList.on('changed', changedMessage);
-  deviceList.on('video', sendVideo);
-});
 
 process.stdin.resume();//so the program will not close instantly
 
 function exitHandler(options, err) {
     if (options.cleanup) {
-      if (redLight) {
-        redLight.setState('off');
-      }
+      webSocket.cleanup();
     }
     if (err) console.log(err.stack);
     if (options.exit) process.exit();
