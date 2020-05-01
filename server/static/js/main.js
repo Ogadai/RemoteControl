@@ -1,4 +1,4 @@
-import { sendDrive, m1up, m1down } from './socket-client.js';
+import { sendDrive, m1up, m1down, video, setCanvas } from './socket-client.js';
 import { orientation } from './orientation.js';
 import { showInfo } from './error.js';
 import { fullScreen } from './full-screen.js';
@@ -7,8 +7,8 @@ const query = selector => document.querySelector(selector);
 
 const { hostname, protocol } = window.location;
 
-const imgElement = query('#imgVideo');
-imgElement.src = `http://${hostname}:3001/?action=stream`;
+const canvasElement = query('#canvasVideo');
+setCanvas(canvasElement);
 
 fullScreen(query('#btnFullScreen'));
 
@@ -71,5 +71,5 @@ orientation(({ turn }) => {
     legoTurn = turn;
     sendUpdate();
 
-    imgElement.style.transform = `scale(1.7) rotate(${-turn}deg)`;
+    canvasElement.style.transform = `scale(1.7) rotate(${-turn}deg)`;
 });

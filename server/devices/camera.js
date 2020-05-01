@@ -110,7 +110,7 @@ class CameraDevice extends EventEmitter {
       while(this.trySendBlock()) {
       }
     } catch (ex) {
-      console.error('Error sending stream data - ' + ex);
+      console.error('Error sending stream data');
       this.stop();
     }
   }

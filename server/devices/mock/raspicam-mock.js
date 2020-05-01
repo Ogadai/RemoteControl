@@ -3,7 +3,7 @@
 
 function RaspiCamMock(opts) {
     var self = this,
-        testVideo = './devices/mock/video.h264';
+        testVideo = './devices/mock/out.h264';
 
     this.start = function () {
         if (opts.mode == 'video') {

@@ -30,8 +30,8 @@ webSocket(server);
 
 if (settings.securePort) {
   const httpsServer = https.createServer({
-    key: fs.readFileSync(path.resolve('./server.key'), 'utf8'),
-    cert: fs.readFileSync(path.resolve('./server.cert'), 'utf8')
+    key: fs.readFileSync(path.join(__dirname, 'server.key'), 'utf8'),
+    cert: fs.readFileSync(path.join(__dirname, 'server.cert'), 'utf8')
   }, robotApp);
   httpsServer.listen(settings.securePort, onListen('https|wss', settings.securePort, false));
   webSocket(httpsServer);
