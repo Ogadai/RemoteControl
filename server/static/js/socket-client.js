@@ -11,7 +11,9 @@ let wsavc;
 
 const videoSize = {
     width: 640,
-    height: 480
+    height: 480,
+    framerate: 20,
+    bitrate: 4000000
 };
 
 webSocket.onopen = () => {

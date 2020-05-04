@@ -88,15 +88,20 @@ class DriveDevice extends EventEmitter {
   }
 
   checkInterval() {
-    if (this.state.left !== 0 || this.state.left !== 0) {
+    if (this.state.left !== 0 || this.state.right !== 0) {
       if (!this.interval) {
         this.interval = setInterval(() => this.onInterval(), INTERVAL);
         this.onInterval();
       }
-    } else if (this.interval) {
-      clearInterval(this.interval);
-      this.onInterval();
-      this.interval = null;
+    } else {
+      if (this.interval) {
+        clearInterval(this.interval);
+        this.interval = null;
+      }
+      if (this.gpio) {
+        this.clearMotor(this.gpio.left);
+        this.clearMotor(this.gpio.right);
+      }
     }
   }
 
@@ -120,6 +125,11 @@ class DriveDevice extends EventEmitter {
 
     pin.writeSync(this.intervalStep <= (Math.abs(speed) * INTERVAL_STEPS) ? 1 : 0);
     altPin.writeSync(0);
+  }
+
+  clearMotor({ forward, back }) {
+    forward.writeSync(0);
+    back.writeSync(0);
   }
 }
 module.exports = DriveDevice;

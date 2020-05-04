@@ -51,6 +51,7 @@ button('#btnM1Down',
     () => m1down(false));
 
 let timerUpdate;
+let windowInFocus = true;
 const triggerTimerUpdate = () => {
     timerUpdate = setTimeout(sendUpdate, 500);
 };
@@ -59,10 +60,12 @@ const sendUpdate = () => {
     if (timerUpdate) clearTimeout(timerUpdate);
 
     showInfo(`Speed: ${legoSpeed}, Turn: ${legoTurn}`);
-    sendDrive({
-        speed: legoSpeed,
-        turn: legoTurn
-    });
+    if (windowInFocus) {
+        sendDrive({
+            speed: legoSpeed,
+            turn: legoTurn
+        });
+    }
 
     triggerTimerUpdate();
 };
@@ -72,4 +75,11 @@ orientation(({ turn }) => {
     sendUpdate();
 
     canvasElement.style.transform = `rotate(${-turn}deg)`;
+});
+
+window.addEventListener('focus', () => {
+    windowInFocus = true;
+});
+window.addEventListener('blur', () => {
+    windowInFocus = false;
 });

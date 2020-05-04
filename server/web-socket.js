@@ -39,7 +39,7 @@ module.exports = function(server) {
   
           if (device) {
             device.setState(state, options);
-            if (settings.debug) console.log(decodedMsg.name + ' set: ' + state);
+            if (settings.debug) console.log(decodedMsg.name + ' set: ' + JSON.stringify(state));
           } else {
             console.log('unknown device: ', decodedMsg);
           }
