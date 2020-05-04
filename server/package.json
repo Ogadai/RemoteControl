@@ -17,7 +17,7 @@
     "moment": "^2.14.1",
     "nodemon": "^1.10.2",
     "onoff": "^1.1.1",
-    "raspicam": "^0.2.13",
+    "raspicam": "git+https://github.com/Ogadai/node-raspicam.git",
     "sanitize-html": "^1.23.0",
     "websocket": "^1.0.23"
   }
