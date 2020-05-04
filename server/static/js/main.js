@@ -71,5 +71,5 @@ orientation(({ turn }) => {
     legoTurn = turn;
     sendUpdate();
 
-    canvasElement.style.transform = `scale(1.7) rotate(${-turn}deg)`;
+    canvasElement.style.transform = `rotate(${-turn}deg)`;
 });

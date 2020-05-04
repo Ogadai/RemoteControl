@@ -23,7 +23,7 @@ class CameraDevice extends EventEmitter {
     this.skipBlocks = 0;
   }
 
-  setState(state) {
+  setState(state, options) {
     if (state.startsWith(BLOCKS_RECEIVED_PREFIX)) {
       let blockCount = parseInt(state.substring(BLOCKS_RECEIVED_PREFIX.length));
       this.updateBlocksReceived(blockCount);
@@ -33,7 +33,7 @@ class CameraDevice extends EventEmitter {
     const turnOn = (state.startsWith('on'));
     if (this.running !== turnOn) {
       if (turnOn)
-        this.start(state);
+        this.start(state, options);
       else
         this.stop();
     } else if (this.running) {
@@ -54,7 +54,7 @@ class CameraDevice extends EventEmitter {
     reset();
   }
 
-  start(state) {
+  start(state, options) {
     this.blocksSent = 0;
     this.blocks = [];
 
@@ -62,7 +62,10 @@ class CameraDevice extends EventEmitter {
         sizePos = state.indexOf('-('),
         sizeEnd = sizePos !== -1 ? state.indexOf(')', sizePos) : -1;
 
-    if (sizePos !== -1 && sizeEnd !== -1) {
+    if (options) {
+      const { width, height, bitrate, framerate } = options;
+      cameraOptions = extend({}, this.options, { width, height, bitrate, framerate });
+    } else if (sizePos !== -1 && sizeEnd !== -1) {
       let sizeParams = state.substring(sizePos + 2, sizeEnd).split(',');
       if (sizeParams.length === 2) {
         // Get the requested size
@@ -77,6 +80,7 @@ class CameraDevice extends EventEmitter {
     }
 
     this.raspicam = this.mock ? new RaspiMock(cameraOptions) : new RaspiCam(cameraOptions);
+    this.emit('changed', 'on', { width: cameraOptions.width, height: cameraOptions.height });
 
     this.raspicam.on('start', (e, t, stream) => {
       console.log('video started');
@@ -90,6 +94,7 @@ class CameraDevice extends EventEmitter {
 
   stop() {
     console.log('video finished');
+    this.emit('changed', 'off');
 
     this.raspicam.stop();
     this.running = false;

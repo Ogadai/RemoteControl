@@ -34,10 +34,11 @@ module.exports = function(server) {
         try {
           const decodedMsg = JSON.parse(message.utf8Data),
               device = deviceList.getDevice(decodedMsg.name),
-              state = decodedMsg.state;
+              state = decodedMsg.state,
+              options = decodedMsg.options;
   
           if (device) {
-            device.setState(state);
+            device.setState(state, options);
             if (settings.debug) console.log(decodedMsg.name + ' set: ' + state);
           } else {
             console.log('unknown device: ', decodedMsg);
@@ -65,10 +66,18 @@ module.exports = function(server) {
       }
     });
   
-    function changedMessage(name, state) {
+    function changedMessage(name, state, options) {
       if (connection) {
-        connection.sendUTF(name + ' changed: ' + state);
+        const message = {
+          name,
+          state,
+          options
+        };
+        connection.sendUTF(JSON.stringify(message));
       }
+    }
+    function setUpdate(name, state, options) {
+
     }
     function sendVideo(data) {
       if (connection) {

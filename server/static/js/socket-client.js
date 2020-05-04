@@ -10,8 +10,8 @@ let socketOpen = false;
 let wsavc;
 
 const videoSize = {
-    width: 960,
-    height: 540
+    width: 640,
+    height: 480
 };
 
 webSocket.onopen = () => {
@@ -25,7 +25,7 @@ webSocket.onopen = () => {
 
 webSocket.onmessage = (evt) => {
     if(typeof evt.data == "string") {
-        return handleMessage(JSON.parse*evt.data);
+        return handleMessage(JSON.parse(evt.data));
     }
 
     var frame = new Uint8Array(evt.data);
@@ -33,7 +33,7 @@ webSocket.onmessage = (evt) => {
 };
 
 function handleMessage(msg) {
-    if (msg.name === 'camera' && msg.name === 'on') {
+    if (msg.name === 'camera' && msg.state === 'on') {
         console.log(`Camera on, options: `, msg.options);
     }
 }
