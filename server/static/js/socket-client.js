@@ -9,6 +9,11 @@ let canvasElement;
 let socketOpen = false;
 let wsavc;
 
+const videoSize = {
+    width: 960,
+    height: 540
+};
+
 webSocket.onopen = () => {
     console.log('socket is connected')
     socketOpen = true;
@@ -19,12 +24,19 @@ webSocket.onopen = () => {
 }
 
 webSocket.onmessage = (evt) => {
-    if(typeof evt.data == "string")
-        return;
+    if(typeof evt.data == "string") {
+        return handleMessage(JSON.parse*evt.data);
+    }
 
     var frame = new Uint8Array(evt.data);
     wsavc.addFrame(frame);
 };
+
+function handleMessage(msg) {
+    if (msg.name === 'camera' && msg.name === 'on') {
+        console.log(`Camera on, options: `, msg.options);
+    }
+}
 
 function send(msg) {
     try {
@@ -59,7 +71,7 @@ export function setCanvas(canvas) {
     canvasElement = canvas;
 
     wsavc = new WSAvcPlayer(canvasElement, "webgl", 1, 35);
-    wsavc.initCanvas(960, 540);
+    wsavc.initCanvas(videoSize.width, videoSize.height);
 
     if (socketOpen) {
         video(true);
@@ -69,6 +81,7 @@ export function setCanvas(canvas) {
 export function video(onoff) {
     send({
         name: 'camera',
-        state: onoff ? 'on' : 'off'
+        state: onoff ? 'on' : 'off',
+        options: onoff ? videoSize : undefined
     });
 }
