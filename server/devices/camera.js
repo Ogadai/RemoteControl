@@ -63,8 +63,8 @@ class CameraDevice extends EventEmitter {
         sizeEnd = sizePos !== -1 ? state.indexOf(')', sizePos) : -1;
 
     if (options) {
-      const { width, height, bitrate, framerate } = options;
-      cameraOptions = extend({}, this.options, { width, height, bitrate, framerate });
+      const { width, height, bitrate, framerate, intra } = options;
+      cameraOptions = extend({}, this.options, { width, height, bitrate, framerate, intra });
     } else if (sizePos !== -1 && sizeEnd !== -1) {
       let sizeParams = state.substring(sizePos + 2, sizeEnd).split(',');
       if (sizeParams.length === 2) {
