@@ -69,6 +69,20 @@ export function m1down(onoff) {
     });
 }
 
+export function m2up(onoff) {
+    send({
+        name: 'm2up',
+        state: onoff ? 'on' : 'off'
+    });
+}
+
+export function m2down(onoff) {
+    send({
+        name: 'm2down',
+        state: onoff ? 'on' : 'off'
+    });
+}
+
 export function setCanvas(canvas) {
     canvasElement = canvas;
 

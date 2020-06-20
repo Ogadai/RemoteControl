@@ -1,4 +1,4 @@
-import { sendDrive, m1up, m1down, video, setCanvas } from './socket-client.js';
+import { sendDrive, m1up, m1down, m2up, m2down, video, setCanvas } from './socket-client.js';
 import { orientation } from './orientation.js';
 import { showInfo } from './error.js';
 import { fullScreen } from './full-screen.js';
@@ -49,6 +49,14 @@ button('#btnM1Up',
 button('#btnM1Down',
     () => m1down(true),
     () => m1down(false));
+
+    
+button('#btnM2Up',
+    () => m2up(true),
+    () => m2up(false));
+button('#btnM2Down',
+    () => m2down(true),
+    () => m2down(false));
 
 let timerUpdate;
 let windowInFocus = true;
