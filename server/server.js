@@ -1,82 +1,61 @@
 "use strict"
 
-const WebSocketServer = require('websocket').server,
+const fs = require('fs'),
+    path = require('path'),
     http = require('http'),
+    https = require('https'),
     moment = require('moment'),
-    DeviceList = require('./device-list'),
     getIP = require('./get-ip'),
     settings = require('./settings'),
-    notify = require('./notify');
+    notify = require('./notify'),
+    app = require('./app'),
+    webSocket = require('./web-socket');
 
-let server = http.createServer((request, response) => {
-  console.log((new Date()) + ' Received request for ' + request.url);
-  response.writeHead(404);
-  response.write('Remote Control - 404');
-  response.end();
-});
-server.listen(settings.port, () => {
-  let addr = 'ws://' + getIP() + ':' + settings.port,
+const ipAddress = getIP();
+const onListen = (protocol, port, doNotify) => () => {
+  let addr = `{${protocol}}://${ipAddress}:${port}`,
       dateNow = moment().format('LLL');
   console.log(dateNow + ' Server is listening at ' + addr);
 
-  if (settings.notifyOptions) {
+  if (doNotify && settings.notifyOptions) {
     notify(settings.notifyOptions, addr, dateNow);
   }
-});
+};
+  
+const robotApp = app();
 
-let wsServer = new WebSocketServer({
-  httpServer: server,
-  autoAcceptConnections: false
-});
+const server = http.createServer(robotApp);
+server.listen(settings.port, onListen('http|ws', settings.port, true));
+webSocket(server);
 
-let deviceList = new DeviceList(settings.devices, 'RC');
+if (settings.securePort) {
+  const httpsServer = https.createServer({
+    key: fs.readFileSync(path.join(__dirname, 'server.key'), 'utf8'),
+    cert: fs.readFileSync(path.join(__dirname, 'server.cert'), 'utf8')
+  }, robotApp);
+  httpsServer.listen(settings.securePort, onListen('https|wss', settings.securePort, false));
+  webSocket(httpsServer);
+}
 
-wsServer.on('request', request => {
-  console.log('Web Socket opened from ', request.origin);
-  let connection = request.accept('echo-protocol', request.origin);
+process.stdin.resume();//so the program will not close instantly
 
-  connection.on('message', message => {
-    if (message.type === 'utf8') {
-      try {
-        let decodedMsg = JSON.parse(message.utf8Data),
-            device = deviceList.getDevice(decodedMsg.name),
-            state = decodedMsg.state;
-
-        if (device) {
-          device.setState(state);
-          console.log(decodedMsg.name + ' set: ' + state);
-        } else {
-          console.log('unknown device: ', decodedMsg);
-        }
-      } catch(e) {
-        console.error('error processing message: ', message.utf8Data);
-        console.error(e);
-      }
+function exitHandler(options, err) {
+    if (options.cleanup) {
+      webSocket.cleanup();
     }
-    else if (message.type === 'binary') {
-      console.log('Received Binary Message of ' + message.binaryData.length + ' bytes');
-    }
-  });
-  connection.on('close', (reasonCode, description) => {
-    console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
+    if (err) console.log(err.stack);
+    if (options.exit) process.exit();
+}
 
-    deviceList.reset();
-    deviceList.removeListener('changed', changedMessage);
-    deviceList.removeListener('video', sendVideo);
-    connection = null;
-  });
+//do something when app is closing
+process.on('exit', exitHandler.bind(null,{cleanup:true}));
 
-  function changedMessage(name, state) {
-    if (connection) {
-      connection.sendUTF(name + ' changed: ' + state);
-    }
-  }
-  function sendVideo(data) {
-    if (connection) {
-      connection.sendBytes(data);
-    }
-  }
+//catches ctrl+c event
+process.on('SIGINT', exitHandler.bind(null, {exit:true}));
 
-  deviceList.on('changed', changedMessage);
-  deviceList.on('video', sendVideo);
-});
+// catches "kill pid" (for example: nodemon restart)
+process.on('SIGUSR1', exitHandler.bind(null, {exit:true}));
+process.on('SIGUSR2', exitHandler.bind(null, {exit:true}));
+
+//catches uncaught exceptions
+process.on('uncaughtException', exitHandler.bind(null, {exit:true}));

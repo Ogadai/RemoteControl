@@ -31,6 +31,9 @@ node_modules
 *.pyc
 
 settings.js
+server.cert
+server.key
+
 devices/test/test.jpg
 devices/test/video.h264
 .vscode/

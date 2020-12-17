@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="/static/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#000000" />
+    <meta
+      name="description"
+      content="Lego robot control"
+    />
+    <link rel="apple-touch-icon" href="/logo192.png" />
+    <!--
+      manifest.json provides metadata used when your web app is installed on a
+      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
+    -->
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="stylesheet" href="/css/style.css" />
+
+    <title>Lego Robot</title>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root">
+      <canvas id="canvasVideo" width="640" height="480"></canvas>
+      <button id="btnFullScreen">&nbsp;</button>
+      <button id="btnForward" class="btn command">Forward</button>
+      <button id="btnBackward" class="btn command">Backward</button>
+      <button id="btnM1Up" class="btn smallcommand">M1Up</button>
+      <button id="btnM1Down" class="btn smallcommand">M1Down</button>
+      <button id="btnM2Up" class="btn smallcommand">M2Up</button>
+      <button id="btnM2Down" class="btn smallcommand">M2Down</button>
+      <div id="divMessage"></div>
+    </div>
+
+    <script src="/node_modules/sanitize-html/dist/sanitize-html.js"></script>
+    <script type="module" src="/js/http-live-player.js"></script>
+    <script type="module" src="/js/main.js"></script>
+  </body>
+</html>

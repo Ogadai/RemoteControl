@@ -4,7 +4,8 @@ const EventEmitter = require('events'),
       deviceType = {
         onoff: require('./devices/onoff'),
         steering: require('./devices/steering'),
-        camera: require('./devices/camera')
+        camera: require('./devices/camera'),
+        drive: require('./devices/drive')
       };
 
 class DeviceList extends EventEmitter {
@@ -14,7 +15,7 @@ class DeviceList extends EventEmitter {
 
     configList.forEach(config => {
         let device = new deviceType[config.type](config, nodeName);
-        device.on('changed', state => { this.emit('changed', config.name, state); })
+        device.on('changed', (state, options) => { this.emit('changed', config.name, state, options); })
         device.on('video', data => { this.emit('video', data); })
 
         this.devices[config.name] = device;
