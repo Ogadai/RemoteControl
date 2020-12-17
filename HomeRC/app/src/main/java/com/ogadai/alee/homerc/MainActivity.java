@@ -43,15 +43,18 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private CheckBox mCheckSteering;
     private CheckBox mCheckMotor1Swap;
     private CheckBox mCheckMotor2Swap;
+    private CheckBox mCheckDPad;
 
     private VideoPlayer mVideoPlayer;
 
     private TextView mTemperature;
 
+    FrameLayout mDPadControls;
     ImageButton mForwards;
     ImageButton mBackwards;
     ImageButton mLeft;
     ImageButton mRight;
+
     ImageButton mHorn;
 
     private enum ConnectionColours {
@@ -94,30 +97,33 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         mConnectionDetails = new ConnectionDetails();
         mConnectionDetails.readSettings(this);
 
-        mContentView = (TextureView)findViewById(R.id.fullscreen_content);
-        mConnectionStatus = (TextView)findViewById(R.id.connection_status);
+        mContentView = (TextureView) findViewById(R.id.fullscreen_content);
+        mConnectionStatus = (TextView) findViewById(R.id.connection_status);
         mConnectionLight = (ImageButton) findViewById(R.id.connection_light);
 
         mSettingsView = findViewById(R.id.connection_settings);
-        mConnectionAddress = (EditText)findViewById(R.id.connection_address);
-        mCheckSteering = (CheckBox)findViewById(R.id.check_steering);
-        mCheckMotor1Swap = (CheckBox)findViewById(R.id.motor1_swap);
-        mCheckMotor2Swap = (CheckBox)findViewById(R.id.motor2_swap);
+        mConnectionAddress = (EditText) findViewById(R.id.connection_address);
+        mCheckSteering = (CheckBox) findViewById(R.id.check_steering);
+        mCheckMotor1Swap = (CheckBox) findViewById(R.id.motor1_swap);
+        mCheckMotor2Swap = (CheckBox) findViewById(R.id.motor2_swap);
 
-        mTemperature = (TextView)findViewById(R.id.temperature);
+        mCheckDPad = (CheckBox) findViewById(R.id.use_dpad);
+
+        mTemperature = (TextView) findViewById(R.id.temperature);
 
         mSettingsView.setVisibility(View.INVISIBLE);
         mConnected = false;
 
         final Context context = this;
 
-        ((ImageButton)findViewById(R.id.connection_setup)).setOnClickListener(new View.OnClickListener() {
+        ((ImageButton) findViewById(R.id.connection_setup)).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 mConnectionAddress.setText(mConnectionDetails.getAddress());
                 mCheckSteering.setChecked(mConnectionDetails.getSteering());
                 mCheckMotor1Swap.setChecked(mConnectionDetails.getMotor1Swap());
                 mCheckMotor2Swap.setChecked(mConnectionDetails.getMotor2Swap());
+                mCheckDPad.setChecked(mConnectionDetails.getDPad());
 
                 mSettingsView.setVisibility(View.VISIBLE);
 
@@ -131,13 +137,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 worker.start();
             }
         });
-        ((Button)findViewById(R.id.connection_connect)).setOnClickListener(new View.OnClickListener() {
+        ((Button) findViewById(R.id.connection_connect)).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 mConnectionDetails.setAddress(mConnectionAddress.getText().toString());
                 mConnectionDetails.setSteering(mCheckSteering.isChecked());
                 mConnectionDetails.setMotor1Swap(mCheckMotor1Swap.isChecked());
                 mConnectionDetails.setMotor2Swap(mCheckMotor2Swap.isChecked());
+                mConnectionDetails.setDPad(mCheckDPad.isChecked());
                 mConnectionDetails.saveSettings(context);
 
                 mSettingsView.setVisibility(View.INVISIBLE);
@@ -145,6 +152,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
                 mTriedTurningOnBT = false;
                 mTriedBTDiscovery = false;
+                setupUIControls();
                 initialiseConnection();
             }
         });
@@ -152,14 +160,16 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         setConnectionStatus("Initialising...");
         setVisibility();
 
-        mForwards = (ImageButton)findViewById(R.id.forward_button);
-        mBackwards = (ImageButton)findViewById(R.id.backward_button);
-        mLeft = (ImageButton)findViewById(R.id.left_button);
-        mRight = (ImageButton)findViewById(R.id.right_button);
+        mDPadControls = (FrameLayout) findViewById(R.id.dpad_controls_ui);
+        mForwards = (ImageButton) findViewById(R.id.forward_button);
+        mBackwards = (ImageButton) findViewById(R.id.backward_button);
+        mLeft = (ImageButton) findViewById(R.id.left_button);
+        mRight = (ImageButton) findViewById(R.id.right_button);
 
-        mHorn = (ImageButton)findViewById(R.id.horn_button);
+        mHorn = (ImageButton) findViewById(R.id.horn_button);
         mHorn.setOnTouchListener(new ButtonTouchListener("horn"));
 
+        setupUIControls();
         initialiseConnection();
     }
 
@@ -212,6 +222,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             }
         });
     }
+
     private void setConnectionStatus(final String status) {
         runOnUiThread(new Runnable() {
             @Override
@@ -220,12 +231,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             }
         });
     }
+
     private void setConnectionLight(final ConnectionColours colour) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 int drawableId = R.drawable.green;
-                switch(colour) {
+                switch (colour) {
                     case RED:
                         drawableId = R.drawable.red;
                         break;
@@ -241,21 +253,26 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         });
     }
 
-    private void setupUIControls(final boolean steering) {
+    private void setupUIControls() {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                mLeft.setVisibility(steering ? View.GONE : View.VISIBLE);
-                mRight.setVisibility(steering ? View.GONE : View.VISIBLE);
+                boolean dPad = mConnectionDetails.getDPad();
 
-                FrameLayout.LayoutParams params = (FrameLayout.LayoutParams)mForwards.getLayoutParams();
-                params.gravity = steering ? Gravity.BOTTOM | Gravity.RIGHT : Gravity.TOP | Gravity.LEFT;
-                mForwards.setLayoutParams(params);
+                FrameLayout dPadControls = (FrameLayout) findViewById(R.id.dpad_controls_ui);
+                dPadControls.setVisibility(dPad ? View.VISIBLE : View.GONE);
 
                 mForwards.setOnTouchListener(new ButtonTouchListener(mConnectionDetails.getMotor1Swap() ? "backwards" : "forwards"));
                 mBackwards.setOnTouchListener(new ButtonTouchListener(mConnectionDetails.getMotor1Swap() ? "forwards" : "backwards"));
                 mLeft.setOnTouchListener(new ButtonTouchListener(mConnectionDetails.getMotor2Swap() ? "right" : "left"));
                 mRight.setOnTouchListener(new ButtonTouchListener(mConnectionDetails.getMotor2Swap() ? "left" : "right"));
+
+                mDPadControls.setOnTouchListener(new DPadTouchListener(mDPadControls,
+                        new DPadButton(mForwards, "forwards"),
+                        new DPadButton(mBackwards, "backwards"),
+                        new DPadButton(mLeft, "left"),
+                        new DPadButton(mRight, "right")
+                ));
             }
         });
     }
@@ -278,7 +295,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         try {
             disconnect();
 
-            setupUIControls(mConnectionDetails.getSteering());
             setConnectionStatus("Connecting...");
             setTemperature("");
             setConnectionLight(ConnectionColours.AMBER);
@@ -418,7 +434,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private void checkBluetoothPermissions() {
         mTriedBTDiscovery = true;
-        requestPermissions(new String[] { Manifest.permission.ACCESS_COARSE_LOCATION }, REQUEST_COURSE_LCOATION);
+        requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, REQUEST_COURSE_LCOATION);
     }
 
     @Override
@@ -517,10 +533,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     @Override
-    public void onActivityResult (int requestCode,
-                                  int resultCode,
-                                  Intent data) {
-        switch(requestCode) {
+    public void onActivityResult(int requestCode,
+                                 int resultCode,
+                                 Intent data) {
+        switch (requestCode) {
             case REQUEST_ENABLE_BT:
                 if (resultCode == RESULT_OK) {
                     checkBluetoothPermissions();
@@ -535,6 +551,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     float[] mGravity;
     float[] mGeomagnetic;
     int mLastRoll = 0;
+
     @Override
     public void onSensorChanged(SensorEvent event) {
         if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER)
@@ -551,10 +568,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 float orientation[] = new float[3];
                 SensorManager.getOrientation(R, orientation);
 
-                int roll = (int)(orientation[1] * 10);
+                int roll = (int) (orientation[1] * 10);
 
                 // null zone
                 if (roll <= 2 && roll >= -2) roll = 0;
+                roll = Math.max(-10, Math.min(10, roll));
 
                 if (roll != mLastRoll) {
                     mLastRoll = roll;
@@ -582,8 +600,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         @Override
         public boolean onTouch(View v, MotionEvent event) {
-            switch(event.getAction())
-            {
+            switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN:
                     sendMessage(new DeviceMessage(mDevice, "on"));
                     break;
@@ -594,5 +611,75 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             }
             return false;
         }
+    }
+
+    private class DPadButton {
+        private ImageButton mButton;
+        private String mMsg;
+
+        private boolean mPressed;
+
+        public DPadButton(ImageButton button, String msg) {
+            mButton = button;
+            mMsg = msg;
+            mPressed = false;
+        }
+
+        public void setPressed(boolean pressed) {
+            if (mPressed != pressed) {
+                mButton.setPressed(pressed);
+                sendMessage(new DeviceMessage(mMsg, pressed ? "on" : "off"));
+                mPressed = pressed;
+            }
+        }
+    }
+
+
+    private class DPadTouchListener implements View.OnTouchListener {
+        private View mView;
+        private DPadButton mUp;
+        private DPadButton mDown;
+        private DPadButton mLeft;
+        private DPadButton mRight;
+
+        public DPadTouchListener(View view,
+                                 DPadButton up, DPadButton down, DPadButton left, DPadButton right
+        ) {
+            mView = view;
+            mUp = up;
+            mDown = down;
+            mLeft = left;
+            mRight = right;
+        }
+
+        @Override
+        public boolean onTouch(View v, MotionEvent event) {
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                case MotionEvent.ACTION_MOVE:
+                    int width = mView.getWidth();
+                    int height = mView.getHeight();
+
+                    float x = event.getX() - width / 2;
+                    float y = event.getY() - height / 2;
+
+                    mUp.setPressed(y < -height / 6);
+                    mDown.setPressed(y > height / 6);
+
+                    mLeft.setPressed(x < -width / 6);
+                    mRight.setPressed(x > width / 6);
+
+                    break;
+
+                case MotionEvent.ACTION_UP:
+                    mUp.setPressed(false);
+                    mDown.setPressed(false);
+                    mLeft.setPressed(false);
+                    mRight.setPressed(false);
+                    break;
+            }
+            return false;
+        }
+
     }
 }

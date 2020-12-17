@@ -28,13 +28,13 @@ public class BluetoothClient implements RemoteDevice {
     private MicroBitEventSender mForwardsBackwards;
     private MicroBitEventSender mSteering;
     private MicroBitEventSender mActions;
-    private MicroBitEventSender mSteerDuration;
+//    private MicroBitEventSender mSteerDuration;
     private MicroBitTemperature mTemperature;
 
     private ArrayList<DeviceMessage> mMessageQueue;
 
-    private boolean mContinuousSteeringMode = false;
-    private int mLastLeftRightState = 0;
+//    private boolean mContinuousSteeringMode = false;
+//    private int mLastLeftRightState = 0;
 
     private static final String TAG = "BluetoothClient";
 
@@ -45,7 +45,7 @@ public class BluetoothClient implements RemoteDevice {
         mForwardsBackwards = new MicroBitEventSender(1027);
         mSteering = new MicroBitEventSender(1028);
         mActions = new MicroBitEventSender(1029);
-        mSteerDuration = new MicroBitEventSender(1030);
+//        mSteerDuration = new MicroBitEventSender(1030);
         mTemperature = new MicroBitTemperature(new MicroBitTemperature.IHandler() {
             @Override
             public void onTemperature(int celcius) {
@@ -59,7 +59,7 @@ public class BluetoothClient implements RemoteDevice {
         mController.addService(mForwardsBackwards);
         mController.addService(mSteering);
         mController.addService(mActions);
-        mController.addService(mSteerDuration);
+//        mController.addService(mSteerDuration);
         mController.addService(mTemperature);
 
         mMessageQueue = new ArrayList<>();
@@ -77,8 +77,8 @@ public class BluetoothClient implements RemoteDevice {
                     mMessageHandler.connected();
                 }
 
-                mSteerDuration.send(steerDuration);
-                mContinuousSteeringMode = (steerDuration != 0);
+//                mSteerDuration.send(steerDuration);
+//                mContinuousSteeringMode = (steerDuration != 0);
             }
 
             @Override
@@ -130,34 +130,34 @@ public class BluetoothClient implements RemoteDevice {
     public void sendMessage(DeviceMessage message)
     {
         boolean useMessage = true;
-        if (!mContinuousSteeringMode) {
-            useMessage = false;
-            String name = message.getName();
-            String state = message.getState();
-
-            int nextLeftRightState = 0;
-            if (name.equalsIgnoreCase("right")) {
-                nextLeftRightState = state.equalsIgnoreCase("on") ? 2 : 0;
-            } else if (name.equalsIgnoreCase("left")) {
-                nextLeftRightState = state.equalsIgnoreCase("on") ? 1 : 0;
-            } else if (name.equalsIgnoreCase("steering")) {
-                int steering = Integer.parseInt(state);
-                if (steering < -30) {
-                    nextLeftRightState = 1;
-                } else if (steering > 30) {
-                    nextLeftRightState = 2;
-                } else {
-                    nextLeftRightState = 0;
-                }
-            } else {
-                useMessage = true;
-            }
-
-            if (nextLeftRightState != mLastLeftRightState) {
-                queueMessage(new DeviceMessage("leftright", Integer.toString(nextLeftRightState)));
-                mLastLeftRightState = nextLeftRightState;
-            }
-        }
+//        if (!mContinuousSteeringMode) {
+//            useMessage = false;
+//            String name = message.getName();
+//            String state = message.getState();
+//
+//            int nextLeftRightState = 0;
+//            if (name.equalsIgnoreCase("right")) {
+//                nextLeftRightState = state.equalsIgnoreCase("on") ? 2 : 0;
+//            } else if (name.equalsIgnoreCase("left")) {
+//                nextLeftRightState = state.equalsIgnoreCase("on") ? 1 : 0;
+//            } else if (name.equalsIgnoreCase("steering")) {
+//                int steering = Integer.parseInt(state);
+//                if (steering < -30) {
+//                    nextLeftRightState = 1;
+//                } else if (steering > 30) {
+//                    nextLeftRightState = 2;
+//                } else {
+//                    nextLeftRightState = 0;
+//                }
+//            } else {
+//                useMessage = true;
+//            }
+//
+//            if (nextLeftRightState != mLastLeftRightState) {
+//                queueMessage(new DeviceMessage("leftright", Integer.toString(nextLeftRightState)));
+//                mLastLeftRightState = nextLeftRightState;
+//            }
+//        }
 
         if (useMessage) {
             queueMessage(message);

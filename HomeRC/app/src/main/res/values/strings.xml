@@ -9,9 +9,12 @@
     <string name="connection_connect">Connect</string>
     <string name="connection_setup">Setup</string>
     <string name="connection_status">Connecting...</string>
-    <string name="steering_option">Steering</string>
+    <string name="steering_option">Tilt to steer</string>
+    <string name="steering_desc">1028 (0-200)</string>
     <string name="motor1">Motor 1</string>
     <string name="motor2">Motor 2</string>
     <string name="motor_swap">Swap direction</string>
+    <string name="dpad_option">D-pad</string>
+    <string name="dpad_desc">LR:1026 (0,1,2), UD:1027 (0,1,2)</string>
 
 </resources>

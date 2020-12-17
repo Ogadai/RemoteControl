@@ -12,11 +12,14 @@ public class ConnectionDetails {
     private boolean mMotor1Swap;
     private boolean mMotor2Swap;
 
+    private boolean mDPad;
+
     public static final String CONNECTION_PREFFILE = "rc_connection";
     public static final String ADDRESSPREF = "address";
     public static final String STEERINGPREF = "steering";
     public static final String MOTOR1SWAPPREF = "motor1swap";
     public static final String MOTOR2SWAPPREF = "motor2swap";
+    public static final String DPADPREF = "dpad";
 
     public String getAddress() { return mAddress; }
     public void setAddress(String address) { mAddress = address; }
@@ -30,12 +33,24 @@ public class ConnectionDetails {
     public boolean getMotor2Swap() { return mMotor2Swap; }
     public void setMotor2Swap(boolean swap) { mMotor2Swap = swap; }
 
+    public boolean getDPad() { return mDPad; }
+    public void setDPad(boolean dPad) { mDPad = dPad; }
+
     public void readSettings(Context context) {
         SharedPreferences prefs = context.getSharedPreferences(CONNECTION_PREFFILE, Context.MODE_PRIVATE);
         mAddress = prefs.getString(ADDRESSPREF, "ws://raspberrypirc:8080");
-        mSteering = prefs.getBoolean(STEERINGPREF, true);
+        // Disabled ws, always use BLE:
+        mAddress = "BLE:";
+
+        mSteering = prefs.getBoolean(STEERINGPREF, false);
+
         mMotor1Swap = prefs.getBoolean(MOTOR1SWAPPREF, false);
         mMotor2Swap = prefs.getBoolean(MOTOR2SWAPPREF, false);
+        // Disabled direction swaps
+        mMotor1Swap = false;
+        mMotor2Swap = false;
+
+        mDPad = prefs.getBoolean(DPADPREF, true);
     }
 
     public void saveSettings(Context context) {
@@ -46,6 +61,9 @@ public class ConnectionDetails {
         editor.putBoolean(STEERINGPREF, mSteering);
         editor.putBoolean(MOTOR1SWAPPREF, mMotor1Swap);
         editor.putBoolean(MOTOR2SWAPPREF, mMotor2Swap);
+
+        editor.putBoolean(DPADPREF, mDPad);
+
         editor.commit();
     }
 
