@@ -2,9 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/HomeRC.iml" filepath="$PROJECT_DIR$/HomeRC.iml" />
-      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
-      <module fileurl="file://$PROJECT_DIR$/microbitblue/microbitblue.iml" filepath="$PROJECT_DIR$/microbitblue/microbitblue.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/HomeRC.iml" filepath="$PROJECT_DIR$/.idea/modules/HomeRC.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/HomeRC.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/HomeRC.app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/microbitblue/HomeRC.microbitblue.iml" filepath="$PROJECT_DIR$/.idea/modules/microbitblue/HomeRC.microbitblue.iml" />
     </modules>
   </component>
 </project>
