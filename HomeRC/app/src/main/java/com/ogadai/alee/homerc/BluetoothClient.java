@@ -28,10 +28,15 @@ public class BluetoothClient implements RemoteDevice {
     private MicroBitEventSender mForwardsBackwards;
     private MicroBitEventSender mSteering;
     private MicroBitEventSender mActions;
-//    private MicroBitEventSender mSteerDuration;
+    //    private MicroBitEventSender mSteerDuration;
     private MicroBitTemperature mTemperature;
 
     private ArrayList<DeviceMessage> mMessageQueue;
+
+    private boolean mActionA = false;
+    private boolean mActionB = false;
+    private boolean mActionX = false;
+    private boolean mActionY = false;
 
 //    private boolean mContinuousSteeringMode = false;
 //    private int mLastLeftRightState = 0;
@@ -115,8 +120,7 @@ public class BluetoothClient implements RemoteDevice {
     }
 
     @Override
-    public void disconnect()
-    {
+    public void disconnect() {
         System.out.println("Disonnecting bluetooth device");
         mController.disconnect();
     }
@@ -127,8 +131,7 @@ public class BluetoothClient implements RemoteDevice {
     }
 
     @Override
-    public void sendMessage(DeviceMessage message)
-    {
+    public void sendMessage(DeviceMessage message) {
         boolean useMessage = true;
 //        if (!mContinuousSteeringMode) {
 //            useMessage = false;
@@ -171,7 +174,7 @@ public class BluetoothClient implements RemoteDevice {
     }
 
     private synchronized boolean addMessageToQueue(DeviceMessage message) {
-        for(DeviceMessage existing : mMessageQueue) {
+        for (DeviceMessage existing : mMessageQueue) {
             if (message.getName().compareToIgnoreCase(existing.getName()) == 0) {
                 existing.setState(message.getState());
                 return true;
@@ -194,6 +197,7 @@ public class BluetoothClient implements RemoteDevice {
     }
 
     private boolean mProcessingQueue = false;
+
     private void processMessageQueue() {
         final DeviceMessage message = getNextMessageFromQueue();
         if (message == null) {
@@ -204,30 +208,44 @@ public class BluetoothClient implements RemoteDevice {
         String name = message.getName();
         MicroBitEventSender sender = null;
         int value = 0;
+        boolean isOn = message.getState().equalsIgnoreCase("on");
 
         // "forwards/backwards/left/right":"on"/"off"
         // "steering": -100 => 100
         if (name.equalsIgnoreCase("forwards")) {
             sender = mForwardsBackwards;
-            value = message.getState().equalsIgnoreCase("on") ? 2 : 0;
+            value = isOn ? 2 : 0;
         } else if (name.equalsIgnoreCase("backwards")) {
             sender = mForwardsBackwards;
-            value = message.getState().equalsIgnoreCase("on") ? 1 : 0;
+            value = isOn ? 1 : 0;
         } else if (name.equalsIgnoreCase("right")) {
             sender = mLeftRight;
-            value = message.getState().equalsIgnoreCase("on") ? 2 : 0;
+            value = isOn ? 2 : 0;
         } else if (name.equalsIgnoreCase("left")) {
             sender = mLeftRight;
-            value = message.getState().equalsIgnoreCase("on") ? 1 : 0;
+            value = isOn ? 1 : 0;
         } else if (name.equalsIgnoreCase("steering")) {
             sender = mSteering;
             value = Integer.parseInt(message.getState()) + 100;
         } else if (name.equalsIgnoreCase("leftright")) {
             sender = mLeftRight;
             value = Integer.parseInt(message.getState());
-        } else if (name.equalsIgnoreCase("horn")) {
+        } else if (name.equalsIgnoreCase("a")) {
+            mActionA = isOn;
             sender = mActions;
-            value = message.getState().equalsIgnoreCase("on") ? 1 : 0;
+            value = getActions();
+        } else if (name.equalsIgnoreCase("b")) {
+            mActionB = isOn;
+            sender = mActions;
+            value = getActions();
+        } else if (name.equalsIgnoreCase("x")) {
+            mActionX = isOn;
+            sender = mActions;
+            value = getActions();
+        } else if (name.equalsIgnoreCase("y")) {
+            mActionY = isOn;
+            sender = mActions;
+            value = getActions();
         }
 
         if (sender != null) {
@@ -239,5 +257,22 @@ public class BluetoothClient implements RemoteDevice {
             });
             Log.i(TAG, message.getName() + ": " + message.getState());
         }
+    }
+
+    private int getActions() {
+        int actions = 0;
+        if (mActionX) {
+            actions += 1;
+        }
+        if (mActionY) {
+            actions += 2;
+        }
+        if (mActionA) {
+            actions += 4;
+        }
+        if (mActionB) {
+            actions += 8;
+        }
+        return actions;
     }
 }

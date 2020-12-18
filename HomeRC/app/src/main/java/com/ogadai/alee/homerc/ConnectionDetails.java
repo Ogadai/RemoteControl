@@ -13,6 +13,7 @@ public class ConnectionDetails {
     private boolean mMotor2Swap;
 
     private boolean mDPad;
+    private boolean mXBoxButtons;
 
     public static final String CONNECTION_PREFFILE = "rc_connection";
     public static final String ADDRESSPREF = "address";
@@ -20,6 +21,7 @@ public class ConnectionDetails {
     public static final String MOTOR1SWAPPREF = "motor1swap";
     public static final String MOTOR2SWAPPREF = "motor2swap";
     public static final String DPADPREF = "dpad";
+    public static final String XBOXBUTTONSPREF = "xboxbuttons";
 
     public String getAddress() { return mAddress; }
     public void setAddress(String address) { mAddress = address; }
@@ -36,6 +38,10 @@ public class ConnectionDetails {
     public boolean getDPad() { return mDPad; }
     public void setDPad(boolean dPad) { mDPad = dPad; }
 
+    public boolean getXBoxButtons() { return mXBoxButtons; }
+    public void setXBoxButtons(boolean xboxButtons) { mXBoxButtons = xboxButtons; }
+
+
     public void readSettings(Context context) {
         SharedPreferences prefs = context.getSharedPreferences(CONNECTION_PREFFILE, Context.MODE_PRIVATE);
         mAddress = prefs.getString(ADDRESSPREF, "ws://raspberrypirc:8080");
@@ -51,6 +57,7 @@ public class ConnectionDetails {
         mMotor2Swap = false;
 
         mDPad = prefs.getBoolean(DPADPREF, true);
+        mXBoxButtons = prefs.getBoolean(XBOXBUTTONSPREF, true);
     }
 
     public void saveSettings(Context context) {
@@ -63,6 +70,7 @@ public class ConnectionDetails {
         editor.putBoolean(MOTOR2SWAPPREF, mMotor2Swap);
 
         editor.putBoolean(DPADPREF, mDPad);
+        editor.putBoolean(XBOXBUTTONSPREF, mXBoxButtons);
 
         editor.commit();
     }

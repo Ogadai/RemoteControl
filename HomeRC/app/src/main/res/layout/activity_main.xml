@@ -23,15 +23,6 @@
             android:orientation="horizontal"
             tools:ignore="UselessParent">
 
-            <ImageButton
-                android:id="@+id/connection_setup"
-                style="?metaButtonBarButtonStyle"
-                android:layout_width="45dp"
-                android:layout_height="match_parent"
-                android:background="@drawable/bg_button"
-                android:clickable="true"
-                android:src="@android:drawable/ic_menu_preferences" />
-
             <TextView
                 android:id="@+id/connection_status"
                 android:layout_width="wrap_content"
@@ -53,13 +44,30 @@
 
         </LinearLayout>
 
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal|top"
+            android:layout_marginTop="80dp"
+            android:orientation="horizontal"
+            tools:ignore="UselessParent">
+            <ImageButton
+                android:id="@+id/connection_setup"
+                android:layout_width="45dp"
+                android:layout_height="45dp"
+                android:clickable="true"
+                android:background="@null"
+                android:scaleType="fitCenter"
+                android:src="@drawable/xbox_start_button" />
+        </LinearLayout>
+
         <FrameLayout
             android:id="@+id/dpad_controls"
             style="?metaButtonBarStyle"
             android:layout_margin="10dp"
             android:layout_width="200dp"
             android:layout_height="200dp"
-            android:layout_gravity="bottom"
+            android:layout_gravity="left|bottom"
             tools:ignore="UselessParent">
 
             <ImageButton
@@ -109,17 +117,62 @@
                 android:clickable="true" />
         </FrameLayout>
 
-        <ImageButton
-            android:id="@+id/horn_button"
-            style="?metaButtonBarButtonStyle"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:layout_gravity="center"
-            android:layout_margin="5dp"
-            android:layout_weight="1"
-            android:background="@drawable/bg_button"
-            android:clickable="true"
-            android:src="@drawable/horn" />
+
+        <FrameLayout
+            android:id="@+id/xbox_buttons"
+            style="?metaButtonBarStyle"
+            android:layout_margin="10dp"
+            android:layout_width="220dp"
+            android:layout_height="220dp"
+            android:layout_gravity="right|bottom"
+            tools:ignore="UselessParent">
+
+            <ImageButton
+                android:id="@+id/x_button"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:layout_gravity="center_vertical|left"
+                android:clickable="false"
+                android:background="@null"
+                android:scaleType="fitCenter"
+                android:src="@drawable/xbox_x_button" />
+
+            <ImageButton
+                android:id="@+id/b_button"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:layout_gravity="center_vertical|right"
+                android:clickable="false"
+                android:background="@null"
+                android:scaleType="fitCenter"
+                android:src="@drawable/xbox_b_button" />
+
+            <ImageButton
+                android:id="@+id/a_button"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:layout_gravity="bottom|center_horizontal"
+                android:clickable="false"
+                android:background="@null"
+                android:scaleType="fitCenter"
+                android:src="@drawable/xbox_a_button" />
+
+            <ImageButton
+                android:id="@+id/y_button"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:layout_gravity="center|top"
+                android:clickable="false"
+                android:background="@null"
+                android:scaleType="fitCenter"
+                android:src="@drawable/xbox_y_button" />
+
+            <FrameLayout
+                android:id="@+id/xbox_buttons_ui"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clickable="true" />
+        </FrameLayout>
 
         <TextView
             android:id="@+id/temperature"
@@ -236,6 +289,27 @@
                     android:text="@string/steering_desc"
                     android:textColor="#65FFFFFF" />
 
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <CheckBox
+                    android:id="@+id/use_xboxbuttons"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="true"
+                    android:text="@string/xboxbuttons_option" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginRight="20dp"
+                    android:text="@string/xboxbuttons_desc"
+                    android:textColor="#65FFFFFF" />
             </LinearLayout>
 
         </LinearLayout>

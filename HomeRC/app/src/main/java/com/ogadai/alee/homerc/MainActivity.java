@@ -44,6 +44,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private CheckBox mCheckMotor1Swap;
     private CheckBox mCheckMotor2Swap;
     private CheckBox mCheckDPad;
+    private CheckBox mCheckXBoxButtons;
 
     private VideoPlayer mVideoPlayer;
 
@@ -55,7 +56,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     ImageButton mLeft;
     ImageButton mRight;
 
-    ImageButton mHorn;
+    FrameLayout mXBoxButtons;
+    ImageButton mAButton;
+    ImageButton mBButton;
+    ImageButton mXButton;
+    ImageButton mYButton;
 
     private enum ConnectionColours {
         RED,
@@ -108,6 +113,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         mCheckMotor2Swap = (CheckBox) findViewById(R.id.motor2_swap);
 
         mCheckDPad = (CheckBox) findViewById(R.id.use_dpad);
+        mCheckXBoxButtons = (CheckBox) findViewById(R.id.use_xboxbuttons);
 
         mTemperature = (TextView) findViewById(R.id.temperature);
 
@@ -124,6 +130,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 mCheckMotor1Swap.setChecked(mConnectionDetails.getMotor1Swap());
                 mCheckMotor2Swap.setChecked(mConnectionDetails.getMotor2Swap());
                 mCheckDPad.setChecked(mConnectionDetails.getDPad());
+                mCheckXBoxButtons.setChecked(mConnectionDetails.getXBoxButtons());
 
                 mSettingsView.setVisibility(View.VISIBLE);
 
@@ -145,6 +152,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 mConnectionDetails.setMotor1Swap(mCheckMotor1Swap.isChecked());
                 mConnectionDetails.setMotor2Swap(mCheckMotor2Swap.isChecked());
                 mConnectionDetails.setDPad(mCheckDPad.isChecked());
+                mConnectionDetails.setXBoxButtons(mCheckXBoxButtons.isChecked());
                 mConnectionDetails.saveSettings(context);
 
                 mSettingsView.setVisibility(View.INVISIBLE);
@@ -166,8 +174,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         mLeft = (ImageButton) findViewById(R.id.left_button);
         mRight = (ImageButton) findViewById(R.id.right_button);
 
-        mHorn = (ImageButton) findViewById(R.id.horn_button);
-        mHorn.setOnTouchListener(new ButtonTouchListener("horn"));
+        mXBoxButtons = (FrameLayout) findViewById(R.id.xbox_buttons_ui);
+        mAButton = (ImageButton) findViewById(R.id.a_button);
+        mBButton = (ImageButton) findViewById(R.id.b_button);
+        mXButton = (ImageButton) findViewById(R.id.x_button);
+        mYButton = (ImageButton) findViewById(R.id.y_button);
 
         setupUIControls();
         initialiseConnection();
@@ -258,20 +269,23 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             @Override
             public void run() {
                 boolean dPad = mConnectionDetails.getDPad();
-
-                FrameLayout dPadControls = (FrameLayout) findViewById(R.id.dpad_controls_ui);
-                dPadControls.setVisibility(dPad ? View.VISIBLE : View.GONE);
-
-                mForwards.setOnTouchListener(new ButtonTouchListener(mConnectionDetails.getMotor1Swap() ? "backwards" : "forwards"));
-                mBackwards.setOnTouchListener(new ButtonTouchListener(mConnectionDetails.getMotor1Swap() ? "forwards" : "backwards"));
-                mLeft.setOnTouchListener(new ButtonTouchListener(mConnectionDetails.getMotor2Swap() ? "right" : "left"));
-                mRight.setOnTouchListener(new ButtonTouchListener(mConnectionDetails.getMotor2Swap() ? "left" : "right"));
+                findViewById(R.id.dpad_controls).setVisibility(dPad ? View.VISIBLE : View.GONE);
 
                 mDPadControls.setOnTouchListener(new DPadTouchListener(mDPadControls,
                         new DPadButton(mForwards, "forwards"),
                         new DPadButton(mBackwards, "backwards"),
                         new DPadButton(mLeft, "left"),
                         new DPadButton(mRight, "right")
+                ));
+
+                boolean xBox = mConnectionDetails.getXBoxButtons();
+                findViewById(R.id.xbox_buttons).setVisibility(xBox ? View.VISIBLE : View.GONE);
+
+                mXBoxButtons.setOnTouchListener(new DPadTouchListener(mXBoxButtons,
+                        new DPadButton(mYButton, "y"),
+                        new DPadButton(mAButton, "a"),
+                        new DPadButton(mXButton, "x"),
+                        new DPadButton(mBButton, "b")
                 ));
             }
         });
@@ -589,28 +603,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
 
-    }
-
-    private class ButtonTouchListener implements View.OnTouchListener {
-        private String mDevice;
-
-        public ButtonTouchListener(String device) {
-            mDevice = device;
-        }
-
-        @Override
-        public boolean onTouch(View v, MotionEvent event) {
-            switch (event.getAction()) {
-                case MotionEvent.ACTION_DOWN:
-                    sendMessage(new DeviceMessage(mDevice, "on"));
-                    break;
-
-                case MotionEvent.ACTION_UP:
-                    sendMessage(new DeviceMessage(mDevice, "off"));
-                    break;
-            }
-            return false;
-        }
     }
 
     private class DPadButton {
