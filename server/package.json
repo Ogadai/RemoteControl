@@ -10,12 +10,13 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "express": "^4.17.1",
     "extend": "^3.0.0",
     "http": "0.0.0",
     "moment": "^2.14.1",
     "nodemon": "^1.10.2",
     "onoff": "^1.1.1",
-    "raspicam": "^0.2.13",
+    "raspicam": "https://github.com/Ogadai/node-raspicam.git",
     "websocket": "^1.0.23"
   }
 }

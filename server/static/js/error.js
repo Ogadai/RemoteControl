@@ -1,3 +1,5 @@
+import { sanitizeHtml } from './sanitize-html.js';
+
 const container = document.querySelector('#divMessage');
 
 const SANTIZE_SETTINGS = {

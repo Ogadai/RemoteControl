@@ -6,9 +6,9 @@ html, body, #root {
 
 #canvasVideo {
     position: absolute;
-    left: 12.5%;
+    left: calc(50vw - (50vh * 4 / 3));
     top: 0;
-    width: 75%;
+    width: calc(100vh * 4 / 3);
     height: 100%;
     z-index: -1;
     background-color: #e0e0e0;
@@ -60,32 +60,46 @@ html, body, #root {
 
 #btnForward {
     right: 10px;
-    top: calc(50% - 100px)
+    bottom: 130px;
 }
 
 #btnBackward {
     right: 10px;
-    top: calc(50% + 20px)
+    bottom: 10px;
+}
+
+#btnLeft {
+    left: 10px;
+    bottom: 10px;
+}
+
+#btnRight {
+    left: 230px;
+    bottom: 10px;
 }
 
 #btnM1Up {
     left: 10px;
-    top: calc(25% - 70px)
+    top: calc(25% - 70px);
+    display: none;
 }
 
 #btnM1Down {
     left: 10px;
-    top: calc(25% + 10px)
+    top: calc(25% + 10px);
+    display: none;
 }
 
 #btnM2Up {
     left: 10px;
-    top: calc(75% - 70px)
+    top: calc(75% - 70px);
+    display: none;
 }
 
 #btnM2Down {
     left: 10px;
-    top: calc(75% + 10px)
+    top: calc(75% + 10px);
+    display: none;
 }
 
 #btnFullScreen {

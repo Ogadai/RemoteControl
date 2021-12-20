@@ -20,8 +20,10 @@ class DriveDevice extends EventEmitter {
     this.interval = null;
     this.intervalStep = 0;
     this.timeout = null;
+    this.rightBias = config.rightBias;
 
     if (Gpio) {
+      console.log(config.gpio)
       const left = config.gpio.left;
       const right = config.gpio.right;
 
@@ -54,8 +56,9 @@ class DriveDevice extends EventEmitter {
       right: 0
     };
 
-    const turnSign = turn < 0 ? -1 : 1;
-    const turnRate = Math.min(Math.abs(turn), MAX_TURN) / MAX_TURN;
+    const adjustedTurn = turn + this.rightBias;
+    const turnSign = adjustedTurn < 0 ? -1 : 1;
+    const turnRate = Math.min(Math.abs(adjustedTurn), MAX_TURN) / MAX_TURN;
 
     if (speed === 0) {
       // turning

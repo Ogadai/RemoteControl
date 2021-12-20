@@ -43,6 +43,26 @@ button('#btnBackward',
         sendUpdate();
     });
 
+button('#btnLeft',
+    () => {
+        legoTurn = -90;
+        sendUpdate();
+    },
+    () => {
+        legoTurn = 0;
+        sendUpdate();
+    });
+
+button('#btnRight',
+    () => {
+        legoTurn = 90;
+        sendUpdate();
+    },
+    () => {
+        legoTurn = 0;
+        sendUpdate();
+    });
+
 button('#btnM1Up',
     () => m1up(true),
     () => m1up(false));
@@ -78,7 +98,18 @@ const sendUpdate = () => {
     triggerTimerUpdate();
 };
 
+let leftRightHidden = false;
+const hideLeftRight = () => {
+    if (!leftRightHidden) {
+        query('#btnLeft').style.display = 'none';
+        query('#btnRight').style.display = 'none';
+        leftRightHidden = true;
+    }
+};
+
 orientation(({ turn }) => {
+    if (turn !== 0) hideLeftRight();
+
     legoTurn = turn;
     sendUpdate();
 
