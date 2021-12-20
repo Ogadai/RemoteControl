@@ -7,8 +7,8 @@ html, body, #root {
 #canvasVideo {
     position: absolute;
     left: calc(50vw - (50vh * 4 / 3));
-    top: 0;
     width: calc(100vh * 4 / 3);
+    top: 0;
     height: 100%;
     z-index: -1;
     background-color: #e0e0e0;
@@ -50,6 +50,7 @@ html, body, #root {
     position: absolute;
     width: 200px;
     height: 100px;
+    display: none;
 }
 
 .btn.smallcommand {

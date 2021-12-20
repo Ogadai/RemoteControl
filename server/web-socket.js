@@ -84,9 +84,34 @@ module.exports = function(server) {
         connection.sendBytes(data);
       }
     }
+
+    function sendDeviceOptions() {
+      const message = {
+        name: 'devices',
+        options: settings.devices.map(deviceOptions)
+      };
+
+      if (connection) {
+        connection.sendUTF(JSON.stringify(message));
+      }
+    }
+
+    function deviceOptions(d) {
+      if (d.type === 'camera') {
+        return {
+          name: d.name,
+          width: d.options.width,
+          height: d.options.height,
+          framerate: d.options.framerate
+        };
+      } else {
+        return { name: d.name };
+      }
+    }
   
     deviceList.on('changed', changedMessage);
     deviceList.on('video', sendVideo);
+    sendDeviceOptions();
   });
 }
 

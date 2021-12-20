@@ -3,7 +3,8 @@
 const EventEmitter = require('events'),
       extend = require('extend'),
       RaspiCam = require('raspicam'),
-      RaspiMock = require('./mock/raspicam-mock');
+      RaspiMock = require('./mock/raspicam-mock'),
+      imagingInUse = require('../imaging/imaging-in-use');
 
 const BLOCK_MARKER = new Buffer([0, 0, 0, 1]),
       BLOCKS_RECEIVED_PREFIX = 'block-';
@@ -21,6 +22,9 @@ class CameraDevice extends EventEmitter {
 
     this.blocksSent = 0;
     this.skipBlocks = 0;
+
+    this.inUsePromise = null;
+    this.inUse = null;
   }
 
   setState(state, options) {
@@ -88,7 +92,13 @@ class CameraDevice extends EventEmitter {
       stream.on('data', this.buffer.bind(this))
     });
 
-    this.raspicam.start();
+    this.inUsePromise = imagingInUse.start();
+    this.inUsePromise.then(inUse => {
+      this.inUsePromise = null;
+      this.inUse = inUse;
+      this.raspicam.start();
+    });
+
     this.running = true;
   }
 
@@ -96,6 +106,14 @@ class CameraDevice extends EventEmitter {
     console.log('video finished');
     this.emit('changed', 'off');
 
+    if (this.inUsePromise) {
+      this.inUsePromise.cancel();
+      this.inUsePromise = null;
+    }
+    if (this.inUse) {
+      this.inUse.stop();
+      this.inUse = null;
+    }
     this.raspicam.stop();
     this.running = false;
   }

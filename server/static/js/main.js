@@ -8,7 +8,7 @@ const query = selector => document.querySelector(selector);
 const { hostname, protocol } = window.location;
 
 const canvasElement = query('#canvasVideo');
-setCanvas(canvasElement);
+setCanvas(canvasElement, updateControls);
 
 fullScreen(query('#btnFullScreen'));
 
@@ -122,3 +122,21 @@ window.addEventListener('focus', () => {
 window.addEventListener('blur', () => {
     windowInFocus = false;
 });
+
+function updateControls(devices) {
+    updateControlForDevice('#btnForward', devices, ['forwards', 'drive']);
+    updateControlForDevice('#btnBackward', devices, ['backwards', 'drive']);
+    updateControlForDevice('#btnLeft', devices, ['steering', 'drive']);
+    updateControlForDevice('#btnRight', devices, ['steering', 'drive']);
+    
+    updateControlForDevice('#btnM1Up', devices, ['m1up']);
+    updateControlForDevice('#btnM1Down', devices, ['m1down']);
+
+    updateControlForDevice('#btnM2Up', devices, ['m2up']);
+    updateControlForDevice('#btnM2Down', devices, ['m2down']);
+}
+
+function updateControlForDevice(selector, devices, deviceNames) {
+    const isVisible = devices.some(d => deviceNames.some(n => n.toLocaleLowerCase() === d.name.toLocaleLowerCase()));
+    query(selector).style.display = isVisible ? 'block' : 'none';
+}

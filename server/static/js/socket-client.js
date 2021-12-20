@@ -8,8 +8,9 @@ webSocket.binaryType = "arraybuffer";
 let canvasElement;
 let socketOpen = false;
 let wsavc;
+let devicesCallback;
 
-const videoSize = {
+export const videoSize = {
     width: 640,
     height: 480,
     framerate: 15,
@@ -19,10 +20,6 @@ const videoSize = {
 webSocket.onopen = () => {
     console.log('socket is connected')
     socketOpen = true;
-
-    if (canvasElement) {
-        video(true);
-    }
 }
 
 webSocket.onmessage = (evt) => {
@@ -37,6 +34,25 @@ webSocket.onmessage = (evt) => {
 function handleMessage(msg) {
     if (msg.name === 'camera' && msg.state === 'on') {
         console.log(`Camera on, options: `, msg.options);
+    } else if (msg.name === 'devices') {
+        console.log(`Devices: `, msg.options);
+        const camOptions = msg.options.find(d => d.name === 'camera');
+        if (camOptions) {
+            videoSize.width = camOptions.width;
+            videoSize.height = camOptions.height;
+            videoSize.framerate = camOptions.framerate;
+            videoSize.intra = camOptions.intra;
+        }
+
+        if (canvasElement) {
+            wsavc.initCanvas(videoSize.width, videoSize.height);
+            canvasElement.style.left = `calc(50vw - (50vh * ${videoSize.width / videoSize.height}))`;
+            canvasElement.style.width = `calc(100vh * ${videoSize.width / videoSize.height})`;
+            video(true);
+        }
+        if (devicesCallback) {
+            devicesCallback(msg.options);
+        }
     }
 }
 
@@ -83,11 +99,11 @@ export function m2down(onoff) {
     });
 }
 
-export function setCanvas(canvas) {
+export function setCanvas(canvas, callback) {
     canvasElement = canvas;
+    devicesCallback = callback;
 
     wsavc = new WSAvcPlayer(canvasElement, "webgl", 1, 35);
-    wsavc.initCanvas(videoSize.width, videoSize.height);
 
     if (socketOpen) {
         video(true);
