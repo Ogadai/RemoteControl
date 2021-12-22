@@ -14,6 +14,7 @@ class CameraDevice extends EventEmitter {
     super();
 
     this.running = false;
+    this.sockets = {};
     this.mock = config.mock;
     this.options = extend({ mode: 'video', output: '-' }, config.options);
     
@@ -39,7 +40,7 @@ class CameraDevice extends EventEmitter {
       if (turnOn)
         this.start(state, options);
       else
-        this.stop();
+        this.stop(options);
     } else if (this.running) {
         this.stop();
         setTimeout(() => {
@@ -48,9 +49,9 @@ class CameraDevice extends EventEmitter {
     }
   }
 
-  reset() {
+  reset(options) {
     if (this.running) {
-      this.stop();
+      this.stop(options);
     }
   }
 
@@ -100,9 +101,19 @@ class CameraDevice extends EventEmitter {
     });
 
     this.running = true;
+    if (options && options.socketIndex) {
+      this.sockets[options.socketIndex] = true;
+    }
   }
 
-  stop() {
+  stop(options) {
+    if (options && options.socketIndex) {
+      this.sockets[options.socketIndex] = false;
+      if (Object.keys(this.sockets).some(k => this.sockets[k])) {
+        return;
+      }
+    }
+
     console.log('video finished');
     this.emit('changed', 'off');
 

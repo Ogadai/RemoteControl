@@ -36,10 +36,10 @@ class DeviceList extends EventEmitter {
     }
   }
 
-  reset() {
+  reset(options) {
     for(var name in this.devices) {
       if (this.devices[name].reset) {
-        this.devices[name].reset();
+        this.devices[name].reset(options);
       }
     }
   }

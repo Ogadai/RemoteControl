@@ -9,6 +9,7 @@ const redLight = deviceList.getDevice('red-light');
 if (redLight) {
     redLight.setState('on');
 }
+let socketIndex = 0;
 
 module.exports = function(server) {
   const wsServer = new WebSocketServer({
@@ -19,6 +20,7 @@ module.exports = function(server) {
   wsServer.on('request', request => {
     console.log(`Web Socket opened from ${request.origin} for ${request.resource}`);
     let connection = request.accept('echo-protocol', request.origin);
+    const thisIndex = ++socketIndex;
   
     let redLightInterval;
     let redOn = false;
@@ -35,8 +37,8 @@ module.exports = function(server) {
           const decodedMsg = JSON.parse(message.utf8Data),
               device = deviceList.getDevice(decodedMsg.name),
               state = decodedMsg.state,
-              options = decodedMsg.options;
-  
+              options = { ...decodedMsg.options, socketIndex: thisIndex };
+
           if (device) {
             device.setState(state, options);
             if (settings.debug) console.log(decodedMsg.name + ' set: ' + JSON.stringify(state));
@@ -55,7 +57,7 @@ module.exports = function(server) {
     connection.on('close', (reasonCode, description) => {
       console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
   
-      deviceList.reset();
+      deviceList.reset({ socketIndex: thisIndex });
       deviceList.removeListener('changed', changedMessage);
       deviceList.removeListener('video', sendVideo);
       connection = null;

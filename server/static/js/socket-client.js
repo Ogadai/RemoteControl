@@ -3,8 +3,7 @@ import { showError } from './error.js';
 const { host, protocol } = window.location;
 
 const wsProtocol = (protocol === 'https:') ? 'wss:' : 'ws:';
-const webSocket = new WebSocket(`${wsProtocol}${host}`, 'echo-protocol');
-webSocket.binaryType = "arraybuffer";
+let webSocket;
 let canvasElement;
 let socketOpen = false;
 let wsavc;
@@ -17,19 +16,43 @@ export const videoSize = {
     intra: 15
 };
 
-webSocket.onopen = () => {
-    console.log('socket is connected')
-    socketOpen = true;
-}
+connectSocket();
 
-webSocket.onmessage = (evt) => {
-    if(typeof evt.data == "string") {
-        return handleMessage(JSON.parse(evt.data));
+function connectSocket() {
+    if (webSocket) {
+        disconnectSocket();
     }
 
-    var frame = new Uint8Array(evt.data);
-    wsavc.addFrame(frame);
-};
+    webSocket = new WebSocket(`${wsProtocol}${host}`, 'echo-protocol');
+    webSocket.binaryType = "arraybuffer";
+
+    webSocket.onopen = () => {
+        console.log('socket is connected')
+        socketOpen = true;
+    }
+
+    webSocket.onmessage = (evt) => {
+        if(typeof evt.data == "string") {
+            return handleMessage(JSON.parse(evt.data));
+        }
+
+        var frame = new Uint8Array(evt.data);
+        wsavc.addFrame(frame);
+    };
+
+    if (canvasElement) {
+        wsavc = new WSAvcPlayer(canvasElement, "webgl", 1, 35);
+    }
+}
+
+function disconnectSocket() {
+    if (webSocket) {
+        webSocket.close();
+        webSocket = null;
+    }
+    socketOpen = false;
+    wsavc = null;
+}
 
 function handleMessage(msg) {
     if (msg.name === 'camera' && msg.state === 'on') {
@@ -117,3 +140,25 @@ export function video(onoff) {
         options: onoff ? videoSize : undefined
     });
 }
+
+
+// Set the name of the hidden property and the change event for visibility
+var hidden, visibilityChange;
+if (typeof document.hidden !== "undefined") { // Opera 12.10 and Firefox 18 and later support
+  hidden = "hidden";
+  visibilityChange = "visibilitychange";
+} else if (typeof document.msHidden !== "undefined") {
+  hidden = "msHidden";
+  visibilityChange = "msvisibilitychange";
+} else if (typeof document.webkitHidden !== "undefined") {
+  hidden = "webkitHidden";
+  visibilityChange = "webkitvisibilitychange";
+}
+document.addEventListener(visibilityChange, () => {
+    if (!document[hidden]) {
+        connectSocket();
+    } else {
+        disconnectSocket();
+    }
+}, false);
+
