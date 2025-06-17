@@ -2,6 +2,7 @@
 const EventEmitter = require('events'),
   extend = require('extend'),
   fs = require('fs'),
+  path = require('path'),
   moment = require('moment'),
   RaspiCam = require('raspicam'),
   StoreFolder = require('../imaging/store-folder'),
@@ -58,10 +59,11 @@ class TimeLapse extends EventEmitter {
     try {
       this.storeFolder.checkFolder(folderstamp).then(() => {
           const writeName = `${folderstamp}/${filestamp}.jpg`;
-
+          const writePath = path.join(__dirname, '../..', this.options.store, writeName);
+console.log('timelapse file to', writePath);
           const camSettings = extend({
             mode: "photo",
-            output: `../${this.options.store}/${writeName}`
+            output: writePath
           }, this.options.options);
 
           const camera = new RaspiCam(camSettings);
